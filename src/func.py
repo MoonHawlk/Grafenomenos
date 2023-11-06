@@ -1,53 +1,26 @@
-def __init__(self, direcionado=False, valorado=False):
-        self.grafo = nx.DiGraph() if direcionado else nx.Graph()
-        self.valorado = valorado
+import networkx as nx
+import matplotlib.pyplot as plt
 
-def adicionar_vertice(self, vertice):
-    self.grafo.add_node(vertice)
+# Crie um grafo não direcionado
+G = nx.Graph()
 
-def adicionar_aresta(self, origem, destino, peso=None):
-    if self.valorado:
-        self.grafo.add_edge(origem, destino, peso=peso)
-    else:
-        self.grafo.add_edge(origem, destino)
+# Solicite ao usuário para adicionar nós
+while True:
+    node = input("Digite o nome de um nó (ou pressione Enter para parar): ")
+    if not node:
+        break
+    G.add_node(node)
 
-def imprimir_grafo(self):
-    print("Lista de Adjacência:")
-    for vertice in self.grafo.nodes():
-        vizinhos = list(self.grafo.neighbors(vertice))
-        print(f"{vertice}: {vizinhos}")
+# Solicite ao usuário para adicionar arestas
+while True:
+    edge = input("Digite as arestas no formato 'nó1 nó2' (ou pressione Enter para parar): ")
+    if not edge:
+        break
+    node1, node2 = edge.split()
+    G.add_edge(node1, node2)
 
-def tamanho_do_grafo(self):
-    return len(self.grafo.nodes())
-
-def ordem_do_grafo(self):
-    return len(self.grafo.edges())
-
-def vertices_adjacentes(self, vertice):
-    return list(self.grafo.neighbors(vertice))
-
-def grau_do_vertice(self, vertice):
-    if self.grafo.is_directed():
-        grau_entrada = self.grafo.in_degree(vertice)
-        grau_saida = self.grafo.out_degree(vertice)
-        return grau_entrada, grau_saida
-    else:
-        return self.grafo.degree(vertice)
-
-def sao_adjacentes(self, vertice1, vertice2):
-    return vertice2 in self.grafo[vertice1]
-
-def menor_caminho(self, origem, destino):
-    try:
-        caminho, custo = nx.shortest_path(self.grafo, origem, destino, weight='peso' if self.valorado else None), nx.shortest_path_length(self.grafo, origem, destino, weight='peso' if self.valorado else None)
-        return caminho, custo
-    except nx.NetworkXNoPath:
-        return None, float('inf')
-
-def visualizar_grafo(self):
-    pos = nx.spring_layout(self.grafo)
-    labels = nx.get_edge_attributes(self.grafo, 'peso' if self.valorado else None)
-        
-    nx.draw(self.grafo, pos, with_labels=True, node_size=500, font_size=10)
-    nx.draw_networkx_edge_labels(self.grafo, pos, edge_labels=labels)
-    plt.show()
+# Visualize o grafo
+pos = nx.spring_layout(G, seed=42)
+nx.draw(G, pos, with_labels=True, node_size=800, node_color="lightblue", font_size=10, font_color="black", font_weight="bold")
+plt.title("Grafo Não Direcionado Personalizado")
+plt.show()
