@@ -1,5 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import subprocess
+import os
 
 def exibir_menu():
     print("Menu:")
@@ -9,6 +11,10 @@ def exibir_menu():
     print("4. Opção 4")
     print("5. Opção 5")
     print("0. Sair")
+
+def limpar_terminal():
+    if subprocess.call("clear" if os.name != 'nt' else 'cls', shell=True) != 0:
+        print("Limpeza do terminal não suportada no seu sistema.")
 
 def criar_grafo_nao_direcionado():
     return nx.Graph()
