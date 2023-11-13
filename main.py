@@ -19,6 +19,7 @@ def main():
         '6': obter_grau_do_vertice_wrapper,
         '7': verificar_adjacencia_entre_vertices_wrapper,
         '8': encontrar_caminho_mais_curto_wrapper,
+        '9': apagar_grafo_wrapper,
         '0': exit
     }
 

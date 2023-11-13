@@ -13,6 +13,7 @@ def exibir_menu():
     print("6. Obter Grau do Vértice")
     print("7. Verificar Adjacência entre Vértices")
     print("8. Encontrar Caminho Mais Curto")
+    print("9. Apagar Grafo Atual")
     print("0. Sair")
 
 def limpar_terminal():
@@ -106,3 +107,6 @@ def encontrar_caminho_mais_curto(graph, valorado):
             print(f"Não há caminho entre {source} e {target}.")
     else:
         print("Os vértices de origem e/ou destino não existem no grafo.")
+
+def apagar_grafo(graph):
+    graph.clear()

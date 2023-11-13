@@ -30,6 +30,11 @@ def encontrar_caminho_mais_curto_wrapper(G, valorado):
     encontrar_caminho_mais_curto(G, valorado)
     time.sleep(2)
 
+def apagar_grafo_wrapper(G, valorado = None, direcionado = None):
+    apagar_grafo(G)
+    print("Grafo apagado com sucesso.")
+    time.sleep(2)
+    
 def sair():
     print("Encerrando o programa.")
     time.sleep(1)
