@@ -4,8 +4,8 @@ import time
 def adicionar_nos_wrapper(G, valorado = None, direcionado = None):
     adicionar_nos(G)
 
-def adicionar_arestas_wrapper(G, valorado):
-    adicionar_arestas(G, valorado)
+def adicionar_arestas_wrapper(G, valorado, direcionado):
+    adicionar_arestas(G, valorado, direcionado)
 
 def visualizar_grafo_wrapper(G, valorado):
     visualizar_grafo(G, valorado)
