@@ -20,6 +20,7 @@ def main():
         '7': verificar_adjacencia_entre_vertices_wrapper,
         '8': encontrar_caminho_mais_curto_wrapper,
         '9': apagar_grafo_wrapper,
+        'L': entrada_lote,
         '0': exit
     }
 
@@ -31,10 +32,20 @@ def main():
         
         if opcao == '0':
             sair()
-        if opcao in opcoes:
-            opcoes[opcao](G, valorado if opcao in ('2', '3', '8') else (direcionado if opcao == '6' else None))
+        
+        elif opcao == 'L':
+            # Opção para entrada em lote
+            entrada_lote(G, valorado, direcionado)
+
+        elif opcao in opcoes:
+            #if opcao == 'L':
+                #entrada_lote(G, valorado, direcionado)
+            if opcao == '2':
+                adicionar_arestas_wrapper(G, valorado, direcionado)
+            else:
+                opcoes[opcao](G, valorado if opcao in ('3', '8') else (direcionado if opcao in ('6', '2') else None))
         else:
-            print(f"Valor de entrada {opcao} incorreto, favor digite uma opção válida.")
+            print(f"Valor de entrada {opcao} incorreto, favor digitar uma opção válida.")
             time.sleep(2)
 
 if __name__ == "__main__":

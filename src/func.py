@@ -31,19 +31,33 @@ def adicionar_nos(graph):
         node = input("Digite o nome de um nó (ou pressione Enter para parar): ")
         if not node:
             break
-        graph.add_node(node)
+        elif not node.strip():
+            print("O rótulo de um nó não pode ser vazio")
+        else:
+            graph.add_node(node)
 
-def adicionar_arestas(graph, valorado):
+def adicionar_arestas(graph, valorado, direcionado):
     while True:
         edge = input("Digite as arestas no formato 'nó1 nó2' (ou pressione Enter para parar): ")
         if not edge:
             break
+
         node1, node2 = edge.split()
+
+        if node1 == node2:
+            print("Arestas de laço não são permitidas.")
+            continue
+
+        if graph.has_edge(node1, node2) or graph.has_edge(node2, node1) and direcionado == 'n':
+            print("Arestas paralelas não são permitidas.")
+            continue
+
         if valorado:
             weight = float(input("Digite o peso da aresta: "))
             graph.add_edge(node1, node2, weight=weight)
         else:
             graph.add_edge(node1, node2)
+
 
 def visualizar_grafo(graph, valorado):
     pos = nx.spring_layout(graph, seed=42)
@@ -110,3 +124,42 @@ def encontrar_caminho_mais_curto(graph, valorado):
 
 def apagar_grafo(graph):
     graph.clear()
+
+def entrada_lote(graph, valorado, direcionado):
+    entrada = input("Digite as informações em lote (vértices e arestas): ")
+    linhas = entrada.split(',')
+    
+    for linha in linhas:
+        if linha.strip():  # Ignora linhas em branco
+            if linha.startswith('n '):
+                # Adiciona nó
+                node = linha.split()[1]
+                if node.strip():
+                    graph.add_node(node)
+                else:
+                    print("O rótulo de um nó não pode ser vazio.")
+            elif linha.startswith('e '):
+                # Adiciona aresta
+                nodes = linha.split()[1:]
+                if len(nodes) >= 2:
+                    node1, node2 = nodes[0], nodes[1]
+                    if node1 == node2:
+                        print("Arestas de laço não são permitidas.")
+                        continue
+
+                    if graph.has_edge(node1, node2) or graph.has_edge(node2, node1) and direcionado == 'n':
+                        print("Arestas paralelas não são permitidas.")
+                        continue
+
+                    if valorado:
+                        weight = float(nodes[2]) if len(nodes) >= 3 else 1.0
+                        graph.add_edge(node1, node2, weight=weight)
+                    else:
+                        graph.add_edge(node1, node2)
+                else:
+                    print("Formato de aresta inválido.")
+            else:
+                print(f"Entrada inválida: {linha}")
+
+    print("Informações em lote processadas com sucesso.")
+   
