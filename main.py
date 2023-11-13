@@ -1,14 +1,27 @@
 from src.func import *
+from src.menu_func import *
 import time
 
 inScreen = True
 
 def main():
-
     direcionado = input("O grafo é direcionado? (s/n): ") == 's'
     valorado = input("O grafo é valorado? (s/n): ") == 's'
 
     G = criar_grafo(direcionado)
+
+    opcoes = {
+        '1': adicionar_nos_wrapper,
+        '2': adicionar_arestas_wrapper,
+        '3': visualizar_grafo_wrapper,
+        '4': ordem_e_tamanho_do_grafo_wrapper,
+        '5': listar_vertices_adjacentes_wrapper,
+        '6': obter_grau_do_vertice_wrapper,
+        '7': verificar_adjacencia_entre_vertices_wrapper,
+        '8': encontrar_caminho_mais_curto_wrapper,
+        '9': apagar_grafo_wrapper,
+        '0': exit
+    }
 
     while inScreen:
         limpar_terminal()
@@ -16,36 +29,12 @@ def main():
         
         opcao = input("Escolha uma opção: ")
         
-        try:
-            if opcao == '1':
-                adicionar_nos(G)
-            elif opcao == '2':
-                adicionar_arestas(G, valorado)
-            elif opcao == '3':
-                visualizar_grafo(G, valorado)
-            elif opcao == '4':
-                ordem_e_tamanho_do_grafo(G)
-                time.sleep(2)
-            elif opcao == '5':
-                listar_vertices_adjacentes(G)
-                time.sleep(2)
-            elif opcao == '6':
-                obter_grau_do_vertice(G, direcionado)
-                time.sleep(2)
-            elif opcao == '7':
-                verificar_adjacencia_entre_vertices(G)
-                time.sleep(2)
-            elif opcao == '8':
-                encontrar_caminho_mais_curto(G, valorado)
-                time.sleep(2)
-            elif opcao == '0':
-                exit()
-            else:
-                print(f"Valor de entrada {opcao} incorreto, favor digite uma opção válida.")
-                time.sleep(2)
-                
-        except ValueError:
-            print("Entrada inválida. Por favor, digite um número válido.")
+        if opcao == '0':
+            sair()
+        if opcao in opcoes:
+            opcoes[opcao](G, valorado if opcao in ('2', '3', '8') else (direcionado if opcao == '6' else None))
+        else:
+            print(f"Valor de entrada {opcao} incorreto, favor digite uma opção válida.")
             time.sleep(2)
 
 if __name__ == "__main__":
