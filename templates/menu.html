@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafenomenos</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        /* Estilo CSS para exibir os botões horizontalmente */
+        ul {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap; /* Adicionado para permitir que os botões quebrem para a próxima linha */
+            justify-content: center;
+        }
+
+        li {
+            margin: 0 5px -5px 5px;
+        }
+
+        #mynetwork {
+            width: 600px;
+            height: 400px;
+            border: 1px solid lightgray;
+            margin: 20px auto; /* Adicionado para centralizar o grafo */
+        }
+
+        /* Estilo para destacar o botão ativo */
+        .active-button {
+            background-color: #1c9d52;
+            color: white;
+        }
+
+        /* Outros estilos... */
+    </style>
+</head>
+    <h1><img src="Grafenomenos.png" alt="Grafenomenos" width="300" height="80"></h1>
+    <ul>
+        <li><button id="adicionarNosButton" onclick="toggleButton('adicionarNosButton', startAdicionarNos, stopAdicionarNos)">Adicionar Nós</button></li>
+        <li><button id="adicionarArestasButton" onclick="toggleButton('adicionarArestasButton', startAdicionarArestas, stopAdicionarArestas)">Adicionar Arestas</button></li>
+        <!-- Adicione outras opções do menu aqui -->
+    </ul>
+    <ul>
+        <li><button id="excluirNosButton" onclick="toggleButton('excluirNosButton', startExcluirNos, stopExcluirNos)">Excluir Nós</button></li>
+        <li><button id="excluirArestasButton" onclick="toggleButton('excluirArestasButton', startExcluirArestas, stopExcluirArestas)">Excluir Arestas</button></li>
+        <!-- Adicione outras opções do menu aqui -->
+    </ul>
+    <ul>
+        <li>
+            <label for="corNoPicker">Cor do Nó:</label>
+            <input type="color" id="corNoPicker" value="#ff0000">
+            <button id="mudarCoresButton" onclick="mudarCorNo()">Mudar Cor do Nó</button>
+        </li>
+        <li>
+            <textarea id="grafo-input" placeholder="Digite as informações do grafo aqui"></textarea>
+            <button onclick="criarGrafo()">Criar Grafo</button>
+        </li>
+    </ul>
+
+    <div id="result-container">
+        <!-- O conteúdo resultante será exibido aqui -->
+    </div>
+
+    <div id="mynetwork"></div>
+
+    <script>
+        let nodes = new vis.DataSet([]);
+        let edges = new vis.DataSet([]);
+        let network;
+        let arestaTemporaria = null;
+        let activeButtonId = null;
+
+        function toggleButton(buttonId, startFunction, stopFunction) {
+            const button = document.getElementById(buttonId);
+
+            if (!button.classList.contains("active-button")) {
+                // Se o botão não estiver destacado, destaca-o e executa a função de início associada
+                resetButtons();
+                button.classList.add("active-button");
+                activeButtonId = buttonId;
+                startFunction();
+            } else {
+                // Se o botão estiver destacado, desativa-o e executa a função de parada associada
+                button.classList.remove("active-button");
+                activeButtonId = null;
+                stopFunction();
+            }
+        }
+
+        function resetButtons() {
+            // Desativa todos os botões
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => button.classList.remove("active-button"));
+        }
+
+        function stopFunctions() {
+            // Para todas as funções relacionadas aos botões
+            stopAdicionarNos();
+            stopExcluirNos();
+            stopAdicionarArestas();
+            stopExcluirArestas();
+            // Adicione aqui outras funções relacionadas aos botões
+        }
+
+        function startAdicionarNos() {
+            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+            network.on("click", function (params) {
+                if (activeButtonId === "adicionarNosButton") {
+                    const { x, y } = params.pointer.canvas;
+                    const label = prompt("Digite o rótulo para o nó:");
+                    if (label !== null && label !== "") {
+                        const nodeId = nodes.length + 1;
+                        nodes.add({ id: nodeId, label: label, x: x, y: y });
+                        showResult(`Adicionando Nó "${label}" em tempo real...`);
+                    }
+                }
+            });
+        }
+
+        function stopAdicionarNos() {
+            network.off("click");
+        }
+
+        function startExcluirNos() {
+            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+            network.on("click", function (params) {
+                if (activeButtonId === "excluirNosButton") {
+                    const nodeId = params.nodes[0];
+                    if (nodeId !== undefined) {
+                        const label = nodes.get(nodeId).label;
+                        nodes.remove({ id: nodeId });
+                        edges.remove({ from: nodeId });
+                        edges.remove({ to: nodeId });
+                        showResult(`Excluindo Nó "${label}" em tempo real...`);
+                    }
+                }
+            });
+        }
+
+        function stopExcluirNos() {
+            network.off("click");
+        }
+
+        function startAdicionarArestas() {
+            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+            network.once("click", function (params) {
+                if (activeButtonId === "adicionarArestasButton") {
+                    const fromNodeId = params.nodes[0];
+
+                    if (fromNodeId !== undefined) {
+                        arestaTemporaria = { from: fromNodeId };
+                        showResult(`Clique em outro nó para adicionar uma aresta a partir de "${nodes.get(fromNodeId).label}"`);
+                        network.on("click", function (params) {
+                            const toNodeId = params.nodes[0];
+                            if (toNodeId !== undefined) {
+                                arestaTemporaria.to = toNodeId;
+                                edges.add(arestaTemporaria);
+                                arestaTemporaria = null;
+                                showResult(`Aresta adicionada entre "${nodes.get(fromNodeId).label}" e "${nodes.get(toNodeId).label}"`);
+                                toggleButton('adicionarArestasButton', startAdicionarArestas, stopAdicionarArestas);
+                            }
+                            network.releaseNode();
+                        });
+                    }
+                }
+            });
+        }
+
+        function stopAdicionarArestas() {
+            network.off("click");
+            arestaTemporaria = null;
+        }
+
+        function startExcluirArestas() {
+            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+            network.on("click", function (params) {
+                if (activeButtonId === "excluirArestasButton") {
+                    const edgeId = params.edges[0];
+                    if (edgeId !== undefined) {
+                        const fromNodeId = edges.get(edgeId).from;
+                        const toNodeId = edges.get(edgeId).to;
+                        edges.remove({ id: edgeId });
+                        showResult(`Excluindo Aresta entre "${nodes.get(fromNodeId).label}" e "${nodes.get(toNodeId).label}" em tempo real...`);
+                    }
+                }
+            });
+        }
+
+        function stopExcluirArestas() {
+            network.off("click");
+        }
+
+        function mudarCorNo() {
+            const corEscolhida = document.getElementById("corNoPicker").value;
+            const selectedNodes = network.getSelectedNodes();
+
+            if (selectedNodes.length > 0) {
+                selectedNodes.forEach(nodeId => {
+                    nodes.update({ id: nodeId, color: corEscolhida });
+                });
+                showResult(`Cor do nó alterada para ${corEscolhida}`);
+            } else {
+                showResult("Selecione pelo menos um nó para mudar a cor.");
+            }
+        }
+
+        function criarGrafo() {
+            const inputText = document.getElementById("grafo-input").value.trim();
+            const lines = inputText.split('\n');
+            const grafoInfo = { nodes: [], edges: [] };
+
+            lines.forEach(line => {
+                const verticesAndWeight = line.split(':');
+                const vertices = verticesAndWeight[0].split('-');
+                const node1 = vertices[0].trim();
+                const node2 = vertices[1].trim();
+                const weight = verticesAndWeight[1] ? parseFloat(verticesAndWeight[1].trim()) : undefined;
+
+                if (!grafoInfo.nodes.includes(node1)) {
+                    grafoInfo.nodes.push(node1);
+                }
+
+                if (!grafoInfo.nodes.includes(node2)) {
+                    grafoInfo.nodes.push(node2);
+                }
+
+                grafoInfo.edges.push({ from: node1, to: node2, weight: weight });
+            });
+
+            // Cria uma janela modal para escolher entre direcionado e não-direcionado
+            const modal = document.createElement("div");
+            modal.innerHTML = `
+                <p>Escolha o tipo de grafo:</p>
+                <button id="direcionadoButton">Direcionado</button>
+                <button id="naoDirecionadoButton">Não-Direcionado</button>
+            `;
+            modal.style.position = "fixed";
+            modal.style.top = "50%";
+            modal.style.left = "50%";
+            modal.style.transform = "translate(-50%, -50%)";
+            modal.style.backgroundColor = "white";
+            modal.style.padding = "20px";
+            modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+            document.body.appendChild(modal);
+
+            // Adiciona eventos aos botões da janela modal
+            const direcionadoButton = document.getElementById("direcionadoButton");
+            const naoDirecionadoButton = document.getElementById("naoDirecionadoButton");
+
+            direcionadoButton.addEventListener("click", function () {
+                criarGrafoWithOptions(grafoInfo, true);
+                document.body.removeChild(modal);
+            });
+
+            naoDirecionadoButton.addEventListener("click", function () {
+                criarGrafoWithOptions(grafoInfo, false);
+                document.body.removeChild(modal);
+            });
+        }
+
+        function criarGrafoWithOptions(grafoInfo, isDirected) {
+            const grafoOptions = {
+                nodes: new vis.DataSet(grafoInfo.nodes.map(node => ({ id: node, label: node }))),
+                edges: new vis.DataSet(grafoInfo.edges),
+            };
+
+            if (isDirected) {
+                grafoOptions.edges.forEach(edge => {
+                    edge.arrows = { to: { enabled: true, scaleFactor: 0.5 } };
+                });
+            }
+
+            const container = document.getElementById("mynetwork");
+            const grafo = new vis.Network(container, grafoOptions, {});
+            showResult("Grafo criado com sucesso!");
+        }
+
+
+
+        function showResult(message) {
+            document.getElementById("result-container").innerHTML = message;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const container = document.getElementById("mynetwork");
+            const data = { nodes: nodes, edges: edges };
+            const options = {};
+            network = new vis.Network(container, data, options);
+        });
+    </script>
+</body>
+</html>
