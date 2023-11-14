@@ -14,6 +14,7 @@ def exibir_menu():
     print("7. Verificar Adjacência entre Vértices")
     print("8. Encontrar Caminho Mais Curto")
     print("9. Apagar Grafo Atual")
+    print("L. Para Inserir Lote de Instruções")
     print("0. Sair")
 
 def limpar_terminal():
