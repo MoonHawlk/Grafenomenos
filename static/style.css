@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Heebo&display=swap');
+
+body{
+    background-color: rgb(255, 255, 255);
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap; /* Adicionado para permitir que os botões quebrem para a próxima linha */
+    justify-content: center;
+    
+}
+among {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 10px;
+    color: white;
+    text-shadow: 2px 2px rgb(116, 116, 116);
+    text-transform: uppercase;
+    border: solid 2px black;
+    letter-spacing: 1px;
+    font-weight: 600;
+    font-size: 17px;
+    background-color: hsl(49deg 98% 60%);
+    margin-left: 80%;
+    margin-right: 15%;
+    border-radius: 50px;
+    position: relative;
+    overflow: hidden;
+    transition: all .5s ease;
+}
+  
+among:active {
+    transform: scale(.9);
+    transition: all 100ms ease;
+}
+  
+among svg {
+    transition: all .5s ease;
+    z-index: 2;
+}
+  
+  .play {
+    transition: all .5s ease;
+    transition-delay: 300ms;
+  }
+  
+  among:hover svg {
+    transform: scale(3) translate(50%);
+}
+  
+.now {
+    position: absolute;
+    left: 0;
+    transform: translateX(-100%);
+    transition: all .5s ease;
+    z-index: 2;
+}
+  
+among:hover .now {
+    transform: translateX(10px);
+    transition-delay: 300ms;
+}
+  
+among:hover .play {
+    transform: translateX(200%);
+    transition-delay: 300ms;
+}
+li {
+    margin: 0 5px -5px 5px;
+}
+
+#mynetwork {
+    width: 600px;
+    height: 400px;
+    border: 1px solid lightgray;
+    margin: 20px auto; /* Adicionado para centralizar o grafo */
+}
+
+/* Estilo para destacar o botão ativo */
+.active-button {
+    background-color: #1c9d52;
+    color: white;
+}
