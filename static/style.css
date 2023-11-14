@@ -2,8 +2,12 @@
 
 body{
     background-color: rgb(255, 255, 255);
+    font-family:'Heebo';
 }
-
+nav{
+    display: flex;
+    justify-content: center;
+}
 ul {
     list-style-type: none;
     padding: 0;
@@ -26,8 +30,8 @@ among {
     font-weight: 600;
     font-size: 17px;
     background-color: hsl(49deg 98% 60%);
-    margin-left: 80%;
-    margin-right: 15%;
+    margin-left: 42%;
+    margin-right: 42%;
     border-radius: 50px;
     position: relative;
     overflow: hidden;
@@ -62,12 +66,12 @@ among svg {
 }
   
 among:hover .now {
-    transform: translateX(10px);
+    transform: translateX(90%);
     transition-delay: 300ms;
 }
   
 among:hover .play {
-    transform: translateX(200%);
+    transform: translateX(0%);
     transition-delay: 300ms;
 }
 li {
@@ -85,4 +89,20 @@ li {
 .active-button {
     background-color: #1c9d52;
     color: white;
+}
+
+.desfecho-texto{    
+    margin-top: 1%;
+    margin-left: 40%;
+    margin-right: 40%;
+    justify-content: center;
+    display: flex;
+    font-size: 15px;
+    text-align: center;
+    color: rgb(0, 0, 0);
+}
+ill{
+    margin-top: 1%;
+    justify-content: center;
+    display: flex;
 }
