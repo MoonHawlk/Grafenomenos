@@ -20,7 +20,7 @@ def main():
         '7': verificar_adjacencia_entre_vertices_wrapper,
         '8': encontrar_caminho_mais_curto_wrapper,
         '9': apagar_grafo_wrapper,
-        'L': entrada_lote,
+        'L': entrada_lote_wrapper,
         '0': exit
     }
 
@@ -34,12 +34,9 @@ def main():
             sair()
         
         elif opcao == 'L':
-            # Opção para entrada em lote
-            entrada_lote(G, valorado, direcionado)
+            entrada_lote_wrapper(G, valorado, direcionado)
 
         elif opcao in opcoes:
-            #if opcao == 'L':
-                #entrada_lote(G, valorado, direcionado)
             if opcao == '2':
                 adicionar_arestas_wrapper(G, valorado, direcionado)
             else:

@@ -130,16 +130,14 @@ def entrada_lote(graph, valorado, direcionado):
     linhas = entrada.split(',')
     
     for linha in linhas:
-        if linha.strip():  # Ignora linhas em branco
+        if linha.strip():
             if linha.startswith('n '):
-                # Adiciona nó
                 node = linha.split()[1]
                 if node.strip():
                     graph.add_node(node)
                 else:
                     print("O rótulo de um nó não pode ser vazio.")
             elif linha.startswith('e '):
-                # Adiciona aresta
                 nodes = linha.split()[1:]
                 if len(nodes) >= 2:
                     node1, node2 = nodes[0], nodes[1]
