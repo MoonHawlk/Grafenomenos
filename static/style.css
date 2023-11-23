@@ -79,9 +79,9 @@ li {
 }
 
 #mynetwork {
-    width: 600px;
-    height: 400px;
-    border: 1px solid lightgray;
+    width: 800px;
+    height: 300px;
+    border: 2px solid rgb(56, 56, 56);
     margin: 20px auto; /* Adicionado para centralizar o grafo */
 }
 

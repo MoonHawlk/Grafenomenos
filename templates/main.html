@@ -5,31 +5,23 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grafenomenos</title>
-    <link rel="stylesheet" type="text/css" href="\static\style.css">
+    <link rel="stylesheet" type="text/css" href="C:\Users\rlanc\Documents\GraphApp\static\style.css">
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    
 </head>
+<body>
     <nav>      
         <h1>
-            <img src="\static\Grafenomenos.png" alt="Grafenomenos" width="200" height="50">
+            <img src="C:\Users\rlanc\Documents\GraphApp\static\Grafenomenos.png" alt="Grafenomenos" width="200" height="50">
         </h1>
     </nav>
     <ul>
         <li><button id="adicionarNosButton" onclick="toggleButton('adicionarNosButton', startAdicionarNos, stopAdicionarNos)">Adicionar Nós</button></li>
-        <li><button id="adicionarArestasButton" onclick="toggleButton('adicionarArestasButton', startAdicionarArestas, stopAdicionarArestas)">Adicionar Arestas</button></li>
-
-    </ul>
-    <ul>
         <li><button id="excluirNosButton" onclick="toggleButton('excluirNosButton', startExcluirNos, stopExcluirNos)">Excluir Nós</button></li>
+        <li><button id="adicionarArestasButton" onclick="toggleButton('adicionarArestasButton', startAdicionarArestas, stopAdicionarArestas)">Adicionar Arestas</button></li>
         <li><button id="excluirArestasButton" onclick="toggleButton('excluirArestasButton', startExcluirArestas, stopExcluirArestas)">Excluir Arestas</button></li>
-        <!-- Adicione outras opções do menu aqui -->
     </ul>
     <ul>
-        <li>
-            <label for="corNoPicker">Cor do Nó:</label>
-            <input type="color" id="corNoPicker" value="#ff0000">
-            <button id="mudarCoresButton" onclick="mudarCorNo()">Mudar Cor do Nó</button>
-        </li>
+        <li><button id="mudarCoresButton" onclick="toggleButton('mudarCoresButton', mudarCorNo, stopMudarCorNos)">Mudar Cor do Nó</button></li>
         <li>
             <textarea id="grafo-input" placeholder="Digite as informações do grafo aqui"></textarea>
             <button onclick="criarGrafo()">Criar Grafo</button>
@@ -48,6 +40,9 @@
         let network;
         let arestaTemporaria = null;
         let activeButtonId = null;
+        let selectedNodeIds = [];
+
+        
 
         function toggleButton(buttonId, startFunction, stopFunction) {
             const button = document.getElementById(buttonId);
@@ -78,17 +73,20 @@
             stopExcluirNos();
             stopAdicionarArestas();
             stopExcluirArestas();
+            stopMudarCorNos();
             // Adicione aqui outras funções relacionadas aos botões
         }
 
+        let nextNodeId = 1; // Adiciona uma variável para controlar os IDs dos nós
+
         function startAdicionarNos() {
-            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+            stopFunctions();
             network.on("click", function (params) {
                 if (activeButtonId === "adicionarNosButton") {
                     const { x, y } = params.pointer.canvas;
                     const label = prompt("Digite o rótulo para o nó:");
                     if (label !== null && label !== "") {
-                        const nodeId = nodes.length + 1;
+                        const nodeId = nextNodeId++; // Usa e incrementa o próximo ID disponível
                         nodes.add({ id: nodeId, label: label, x: x, y: y });
                         showResult(`Adicionando Nó "${label}" em tempo real...`);
                     }
@@ -101,7 +99,7 @@
         }
 
         function startExcluirNos() {
-            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+            stopFunctions();
             network.on("click", function (params) {
                 if (activeButtonId === "excluirNosButton") {
                     const nodeId = params.nodes[0];
@@ -116,29 +114,89 @@
             });
         }
 
+
         function stopExcluirNos() {
             network.off("click");
         }
 
         function startAdicionarArestas() {
             stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+            let fromNodeId = null;
+
             network.once("click", function (params) {
                 if (activeButtonId === "adicionarArestasButton") {
-                    const fromNodeId = params.nodes[0];
+                    fromNodeId = params.nodes[0];
 
                     if (fromNodeId !== undefined) {
                         arestaTemporaria = { from: fromNodeId };
                         showResult(`Clique em outro nó para adicionar uma aresta a partir de "${nodes.get(fromNodeId).label}"`);
-                        network.on("click", function (params) {
+                        network.once("click", function (params) {
                             const toNodeId = params.nodes[0];
+
                             if (toNodeId !== undefined) {
-                                arestaTemporaria.to = toNodeId;
-                                edges.add(arestaTemporaria);
-                                arestaTemporaria = null;
-                                showResult(`Aresta adicionada entre "${nodes.get(fromNodeId).label}" e "${nodes.get(toNodeId).label}"`);
-                                toggleButton('adicionarArestasButton', startAdicionarArestas, stopAdicionarArestas);
+                                // Adiciona um elemento HTML para a janela modal
+                                const modal = document.createElement("div");
+                                modal.innerHTML = `
+                                    <p>Escolha o tipo de grafo:</p>
+                                    <button id="direcionadaButton">Direcionada</button>
+                                    <button id="naoDirecionadaButton">Não-Direcionada</button>
+                                    <input type="number" id="pesoAresta" placeholder="Peso da Aresta">
+                                    <button id="confirmaButton">Confirma</button>
+                                `;
+                                modal.style.position = "fixed";
+                                modal.style.top = "50%";
+                                modal.style.left = "50%";
+                                modal.style.transform = "translate(-50%, -50%)";
+                                modal.style.backgroundColor = "white";
+                                modal.style.padding = "20px";
+                                modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+                                document.body.appendChild(modal);
+
+                                // Adiciona eventos aos botões da janela modal
+                                const direcionadaButton = document.getElementById("direcionadaButton");
+                                const naoDirecionadaButton = document.getElementById("naoDirecionadaButton");
+                                const confirmaButton = document.getElementById("confirmaButton");
+                                const pesoArestaInput = document.getElementById("pesoAresta");
+
+                                naoDirecionadaButton.classList.add("active-button");
+
+                                direcionadaButton.addEventListener("click", function () {
+                                    direcionadaButton.classList.add("active-button");
+                                    naoDirecionadaButton.classList.remove("active-button");
+                                });
+
+                                naoDirecionadaButton.addEventListener("click", function () {
+                                    naoDirecionadaButton.classList.add("active-button");
+                                    direcionadaButton.classList.remove("active-button");
+                                });
+
+                                confirmaButton.addEventListener("click", function () {
+                                    const isDirected = direcionadaButton.classList.contains("active-button");
+                                    const pesoAresta = pesoArestaInput.value.trim();
+
+                                    if (isDirected || !isDirected) {  // Verifica se pelo menos um dos botões está selecionado
+                                        // Cria a aresta com base nas escolhas do usuário
+                                        const novaAresta = { from: fromNodeId, to: toNodeId };
+                                        if (isDirected) {
+                                            novaAresta.arrows = { to: { enabled: true } };
+                                        }
+                                        if (pesoAresta !== "") {
+                                            novaAresta.label = pesoAresta;
+                                        }
+                                        edges.add(novaAresta);
+
+                                        // Fecha a janela modal
+                                        document.body.removeChild(modal);
+                                        showResult(`Aresta adicionada entre "${nodes.get(fromNodeId).label}" e "${nodes.get(toNodeId).label}"`);
+                                        toggleButton('adicionarArestasButton', startAdicionarArestas, stopAdicionarArestas);
+                                    } else {
+                                        // Mostra uma mensagem se nenhum botão foi selecionado
+                                        alert("Selecione o tipo de aresta (Direcionada ou Não-Direcionada)");
+                                    }
+                                });
+                            } else {
+                                network.releaseNode();
                             }
-                            network.releaseNode();
                         });
                     }
                 }
@@ -147,11 +205,11 @@
 
         function stopAdicionarArestas() {
             network.off("click");
-            arestaTemporaria = null;
         }
 
         function startExcluirArestas() {
             stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+            showResult("Clique na aresta que deseja excluir.");
             network.on("click", function (params) {
                 if (activeButtonId === "excluirArestasButton") {
                     const edgeId = params.edges[0];
@@ -170,17 +228,54 @@
         }
 
         function mudarCorNo() {
-            const corEscolhida = document.getElementById("corNoPicker").value;
+            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
+
             const selectedNodes = network.getSelectedNodes();
 
-            if (selectedNodes.length > 0) {
-                selectedNodes.forEach(nodeId => {
-                    nodes.update({ id: nodeId, color: corEscolhida });
-                });
-                showResult(`Cor do nó alterada para ${corEscolhida}`);
-            } else {
+            if (selectedNodes.length === 0) {
                 showResult("Selecione pelo menos um nó para mudar a cor.");
+                toggleButton('mudarCoresButton', mudarCorNo, stopMudarCorNos);
+                return;
             }
+
+            // Cria uma janela modal para escolher a cor
+            const modal = document.createElement("div");
+            modal.innerHTML = `
+                <p>Escolha a cor do nó:</p>
+                <input type="color" id="corNoPicker" value="#000000">
+                <button id="confirmaButton">Confirma</button>
+            `;
+            modal.style.position = "fixed";
+            modal.style.top = "50%";
+            modal.style.left = "50%";
+            modal.style.transform = "translate(-50%, -50%)";
+            modal.style.backgroundColor = "white";
+            modal.style.padding = "20px";
+            modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+            document.body.appendChild(modal);
+
+            // Adiciona eventos aos botões da janela modal
+            const confirmaButton = document.getElementById("confirmaButton");
+
+            confirmaButton.addEventListener("click", function () {
+                const corEscolhida = document.getElementById("corNoPicker").value;
+
+                selectedNodes.forEach((nodeId) => {
+                    nodes.update({ id: nodeId, color: { background: corEscolhida } });
+                });
+
+                showResult(`Cor do nó alterada para ${corEscolhida}`);
+
+                // Remove a seleção dos nós
+                network.unselectAll();
+
+                // Fecha a janela modal
+                document.body.removeChild(modal);
+            });
+        }
+
+        function stopMudarCorNos() {
+            network.off("click");
         }
 
         function criarGrafo() {
@@ -254,8 +349,6 @@
             showResult("Grafo criado com sucesso!");
         }
 
-
-
         function showResult(message) {
             document.getElementById("result-container").innerHTML = message;
         }
@@ -265,6 +358,7 @@
             const data = { nodes: nodes, edges: edges };
             const options = {};
             network = new vis.Network(container, data, options);
+            addEventListeners();
         });
     </script>
     <among>
@@ -284,11 +378,10 @@
     </among>
     <ill>
         <a href="https://github.com/MoonHawlk/Grafenomenos">
-            <img src="\static\github_icon.png" alt="Grafenomenos" width="32" height="32">
+            <img src="C:\Users\rlanc\Documents\GraphApp\static\github_icon.png" alt="Grafenomenos" width="32" height="32">
         </a>
     </ill>
     <xxxx class="desfecho">
         <h3 class="desfecho-texto">© 2023 Grafenomenos. All rights reserved</h3>
     </xxxx>
-</body>
 </html>
