@@ -13,7 +13,8 @@ def exibir_menu():
     print("6. Obter Grau do Vértice")
     print("7. Verificar Adjacência entre Vértices")
     print("8. Encontrar Caminho Mais Curto")
-    print("9. Apagar Grafo Atual")
+    print("9. Calcular a Excentricidade do Vértice")
+    print("10. Apagar Grafo Atual")
     print("L. Para Inserir Lote de Instruções")
     print("0. Sair")
 
@@ -123,15 +124,29 @@ def encontrar_caminho_mais_curto(graph, valorado):
     else:
         print("Os vértices de origem e/ou destino não existem no grafo.")
 
+def calcular_excentricidade_do_vertice(graph, valorado):
+    node = input("Digite o vértice para calcular a excentricidade: ")
+    if node in graph.nodes:
+        if valorado:
+            excentricidade_ponderada = nx.single_source_dijkstra_path_length(graph, source=node)
+            max_excentricidade_ponderada = max(excentricidade_ponderada.values())
+            print(f"Excentricidade ponderada do vértice {node}: {max_excentricidade_ponderada}")
+        else:
+            excentricidade = nx.eccentricity(graph, v=node)
+            print(f"Excentricidade do vértice {node}: {excentricidade}")
+            
+    else:
+        print(f"O vértice {node} não existe no grafo.")
+
 def apagar_grafo(graph):
     graph.clear()
 
 def entrada_lote(graph, valorado, direcionado):
     entrada = input("Digite as informações em lote (vértices e arestas): ")
-    linhas = entrada.split(',')
+    linhas = entrada.split(', ')
     
     for linha in linhas:
-        if linha.strip():
+        if linha.strip():  
             if linha.startswith('n '):
                 node = linha.split()[1]
                 if node.strip():
@@ -160,5 +175,4 @@ def entrada_lote(graph, valorado, direcionado):
             else:
                 print(f"Entrada inválida: {linha}")
 
-    print("Informações em lote processadas com sucesso.")
-   
+    print("Informações em lote processadas com sucesso.")   
