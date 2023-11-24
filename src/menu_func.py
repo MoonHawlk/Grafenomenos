@@ -30,8 +30,8 @@ def encontrar_caminho_mais_curto_wrapper(G, valorado):
     encontrar_caminho_mais_curto(G, valorado)
     time.sleep(2)
 
-def calcular_excentricidade_do_vertice_wrapper(G, valorado = None):
-    calcular_excentricidade_do_vertice(G)
+def calcular_excentricidade_do_vertice_wrapper(G, valorado):
+    calcular_excentricidade_do_vertice(G, valorado)
     time.sleep(2)
 
 def apagar_grafo_wrapper(G, valorado = None, direcionado = None):

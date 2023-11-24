@@ -19,14 +19,14 @@ def main():
         '6': obter_grau_do_vertice_wrapper,
         '7': verificar_adjacencia_entre_vertices_wrapper,
         '8': encontrar_caminho_mais_curto_wrapper,
-        '9': calcular_excentricidade_do_vertice,
+        '9': calcular_excentricidade_do_vertice_wrapper,
         '10': apagar_grafo_wrapper,
         'L': entrada_lote_wrapper,
         '0': exit
     }
 
     while inScreen:
-       # limpar_terminal()
+        limpar_terminal()
         exibir_menu()
         
         opcao = input("Escolha uma opção: ")
@@ -38,7 +38,7 @@ def main():
             entrada_lote(G, valorado, direcionado)
 
         elif opcao == '9':
-            calcular_excentricidade_do_vertice(G, valorado)
+            calcular_excentricidade_do_vertice_wrapper(G, valorado)
 
         elif opcao in opcoes:
             if opcao == '2':
