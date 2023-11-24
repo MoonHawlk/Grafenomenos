@@ -13,8 +13,8 @@ def exibir_menu():
     print("6. Obter Grau do Vértice")
     print("7. Verificar Adjacência entre Vértices")
     print("8. Encontrar Caminho Mais Curto")
-    print("9. Apagar Grafo Atual")
-    print("10. calcular_excentricidade_do_vertice")
+    print("9. Calcular a Excentricidade do Vértice")
+    print("10. Apagar Grafo Atual")
     print("0. Sair")
 
 def limpar_terminal():
@@ -127,10 +127,13 @@ def calcular_excentricidade_do_vertice(graph, valorado):
     node = input("Digite o vértice para calcular a excentricidade: ")
     if node in graph.nodes:
         if valorado:
+            excentricidade_ponderada = nx.single_source_dijkstra_path_length(graph, source=node)
+            max_excentricidade_ponderada = max(excentricidade_ponderada.values())
+            print(f"Excentricidade ponderada do vértice {node}: {max_excentricidade_ponderada}")
+        else:
             excentricidade = nx.eccentricity(graph, v=node)
             print(f"Excentricidade do vértice {node}: {excentricidade}")
-        else:
-            print("O cálculo da excentricidade requer um grafo valorado.")
+            
     else:
         print(f"O vértice {node} não existe no grafo.")
 
@@ -142,16 +145,14 @@ def entrada_lote(graph, valorado, direcionado):
     linhas = entrada.split(', ')
     
     for linha in linhas:
-        if linha.strip():  # Ignora linhas em branco
+        if linha.strip():  
             if linha.startswith('n '):
-                # Adiciona nó
                 node = linha.split()[1]
                 if node.strip():
                     graph.add_node(node)
                 else:
                     print("O rótulo de um nó não pode ser vazio.")
             elif linha.startswith('e '):
-                # Adiciona aresta
                 nodes = linha.split()[1:]
                 if len(nodes) >= 2:
                     node1, node2 = nodes[0], nodes[1]

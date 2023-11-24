@@ -19,14 +19,14 @@ def main():
         '6': obter_grau_do_vertice_wrapper,
         '7': verificar_adjacencia_entre_vertices_wrapper,
         '8': encontrar_caminho_mais_curto_wrapper,
-        '9': apagar_grafo_wrapper,
-        '10': calcular_excentricidade_do_vertice,
+        '9': calcular_excentricidade_do_vertice,
+        '10': apagar_grafo_wrapper,
         'L': entrada_lote_wrapper,
         '0': exit
     }
 
     while inScreen:
-        limpar_terminal()
+       # limpar_terminal()
         exibir_menu()
         
         opcao = input("Escolha uma opção: ")
@@ -35,16 +35,16 @@ def main():
             sair()
         
         elif opcao == 'L':
-            # Opção para entrada em lote
             entrada_lote(G, valorado, direcionado)
 
+        elif opcao == '9':
+            calcular_excentricidade_do_vertice(G, valorado)
+
         elif opcao in opcoes:
-            #if opcao == 'L':
-                #entrada_lote(G, valorado, direcionado)
             if opcao == '2':
                 adicionar_arestas_wrapper(G, valorado, direcionado)
             else:
-                opcoes[opcao](G, valorado if opcao in ('3', '8', '10') else (direcionado if opcao in ('6', '2') else None))
+                opcoes[opcao](G, valorado if opcao in ('3', '8') else (direcionado if opcao in ('6', '2') else None))
         else:
             print(f"Valor de entrada {opcao} incorreto, favor digitar uma opção válida.")
             time.sleep(2)
