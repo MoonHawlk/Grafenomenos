@@ -20,7 +20,8 @@ def main():
         '7': verificar_adjacencia_entre_vertices_wrapper,
         '8': encontrar_caminho_mais_curto_wrapper,
         '9': apagar_grafo_wrapper,
-        'L': entrada_lote,
+        '10': calcular_excentricidade_do_vertice,
+        'L': entrada_lote_wrapper,
         '0': exit
     }
 
@@ -43,7 +44,7 @@ def main():
             if opcao == '2':
                 adicionar_arestas_wrapper(G, valorado, direcionado)
             else:
-                opcoes[opcao](G, valorado if opcao in ('3', '8') else (direcionado if opcao in ('6', '2') else None))
+                opcoes[opcao](G, valorado if opcao in ('3', '8', '10') else (direcionado if opcao in ('6', '2') else None))
         else:
             print(f"Valor de entrada {opcao} incorreto, favor digitar uma opção válida.")
             time.sleep(2)

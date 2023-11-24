@@ -34,6 +34,14 @@ def apagar_grafo_wrapper(G, valorado = None, direcionado = None):
     apagar_grafo(G)
     print("Grafo apagado com sucesso.")
     time.sleep(2)
+
+def calcular_excentricidade_do_vertice_wrapper(G, valorado = None):
+    calcular_excentricidade_do_vertice(G)
+    time.sleep(2)
+
+def entrada_lote_wrapper(G, valorado, direcionado):
+    entrada_lote(G, valorado, direcionado)
+    time.sleep(2)
     
 def sair():
     print("Encerrando o programa.")
