@@ -14,19 +14,19 @@
             <img src="C:\Users\rlanc\Documents\GraphApp\static\Grafenomenos.png" alt="Grafenomenos" width="200" height="50">
         </h1>
     </nav>
-    <ul>
-        <li><button id="adicionarNosButton" onclick="toggleButton('adicionarNosButton', startAdicionarNos, stopAdicionarNos)">Adicionar Nós</button></li>
-        <li><button id="excluirNosButton" onclick="toggleButton('excluirNosButton', startExcluirNos, stopExcluirNos)">Excluir Nós</button></li>
-        <li><button id="adicionarArestasButton" onclick="toggleButton('adicionarArestasButton', startAdicionarArestas, stopAdicionarArestas)">Adicionar Arestas</button></li>
-        <li><button id="excluirArestasButton" onclick="toggleButton('excluirArestasButton', startExcluirArestas, stopExcluirArestas)">Excluir Arestas</button></li>
-    </ul>
-    <ul>
-        <li><button id="mudarCoresButton" onclick="toggleButton('mudarCoresButton', mudarCorNo, stopMudarCorNos)">Mudar Cor do Nó</button></li>
-        <li>
-            <textarea id="grafo-input" placeholder="Digite as informações do grafo aqui"></textarea>
-            <button onclick="criarGrafo()">Criar Grafo</button>
-        </li>
-    </ul>
+
+    <div>
+        <button id="getOrderButton">Obter Ordem do Grafo</button>
+        <button id="getSizeButton">Obter Tamanho do Grafo</button>
+        <button id="verificarAdjacenciaButton">Verificar Adjacência</button>
+        <button id="caminhoMaisCurtoButton">Caminho Mais Curto</button>
+        <button id="calcularExcentricidade">Calcular Excentricidade</button>
+    </div>
+
+    <div>
+        <button id="getAdjacentVerticesButton">Obter Vértices Adjacentes</button>
+        <div id="adjacentVerticesContainer"></div>
+    </div>
 
     <div id="result-container">
         <!-- O conteúdo resultante será exibido aqui -->
@@ -35,353 +35,388 @@
     <div id="mynetwork"></div>
 
     <script>
-        let nodes = new vis.DataSet([]);
-        let edges = new vis.DataSet([]);
-        let network;
-        let arestaTemporaria = null;
-        let activeButtonId = null;
-        let selectedNodeIds = [];
+        document.addEventListener("DOMContentLoaded", function () {
+            let nodes = new vis.DataSet([]);
+            let edges = new vis.DataSet([]);
+            let network;
 
-        
+            const container = document.getElementById("mynetwork");
+            const data = { nodes: nodes, edges: edges };
+            const options = {
+                interaction: {
+                    navigationButtons: true,
+                },
+                manipulation: {
+                    enabled: true,
+                    addNode: function (data, callback) {
+                        const label = prompt("Digite o rótulo para o nó:");
+                        if (label !== null && label !== "") {
+                            data.label = label;
+                            callback(data);
+                            showResult(`Adicionando Nó "${label}".`);
+                        }
+                    },
+                    addEdge: function (data, callback) {
+                        const fromNodeId = data.from;
+                        const toNodeId = data.to;
+                        
+                        // Adiciona uma janela modal para configurar a aresta
+                        const modal = document.createElement("div");
+                        modal.innerHTML = `
+                            <p>Escolha o tipo de grafo:</p>
+                            <button id="direcionadaButton">Direcionada</button>
+                            <button id="naoDirecionadaButton">Não-Direcionada</button>
+                            <input type="text" id="labelAresta" placeholder="Label da Aresta">
+                            <button id="confirmaButton">Confirma</button>
+                        `;
+                        modal.style.position = "fixed";
+                        modal.style.top = "50%";
+                        modal.style.left = "50%";
+                        modal.style.transform = "translate(-50%, -50%)";
+                        modal.style.backgroundColor = "white";
+                        modal.style.padding = "20px";
+                        modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+                        document.body.appendChild(modal);
 
-        function toggleButton(buttonId, startFunction, stopFunction) {
-            const button = document.getElementById(buttonId);
+                        // Adiciona eventos aos botões da janela modal
+                        const direcionadaButton = document.getElementById("direcionadaButton");
+                        const naoDirecionadaButton = document.getElementById("naoDirecionadaButton");
+                        const confirmaButton = document.getElementById("confirmaButton");
+                        const labelArestaInput = document.getElementById("labelAresta");
 
-            if (!button.classList.contains("active-button")) {
-                // Se o botão não estiver destacado, destaca-o e executa a função de início associada
-                resetButtons();
-                button.classList.add("active-button");
-                activeButtonId = buttonId;
-                startFunction();
-            } else {
-                // Se o botão estiver destacado, desativa-o e executa a função de parada associada
-                button.classList.remove("active-button");
-                activeButtonId = null;
-                stopFunction();
-            }
-        }
+                        naoDirecionadaButton.classList.add("active-button");
 
-        function resetButtons() {
-            // Desativa todos os botões
-            const buttons = document.querySelectorAll('button');
-            buttons.forEach(button => button.classList.remove("active-button"));
-        }
+                        direcionadaButton.addEventListener("click", function () {
+                            direcionadaButton.classList.add("active-button");
+                            naoDirecionadaButton.classList.remove("active-button");
+                        });
 
-        function stopFunctions() {
-            // Para todas as funções relacionadas aos botões
-            stopAdicionarNos();
-            stopExcluirNos();
-            stopAdicionarArestas();
-            stopExcluirArestas();
-            stopMudarCorNos();
-            // Adicione aqui outras funções relacionadas aos botões
-        }
+                        naoDirecionadaButton.addEventListener("click", function () {
+                            naoDirecionadaButton.classList.add("active-button");
+                            direcionadaButton.classList.remove("active-button");
+                        });
 
-        let nextNodeId = 1; // Adiciona uma variável para controlar os IDs dos nós
+                        confirmaButton.addEventListener("click", function () {
+                            const isDirected = direcionadaButton.classList.contains("active-button");
+                            const labelAresta = labelArestaInput.value.trim();
 
-        function startAdicionarNos() {
-            stopFunctions();
-            network.on("click", function (params) {
-                if (activeButtonId === "adicionarNosButton") {
-                    const { x, y } = params.pointer.canvas;
-                    const label = prompt("Digite o rótulo para o nó:");
-                    if (label !== null && label !== "") {
-                        const nodeId = nextNodeId++; // Usa e incrementa o próximo ID disponível
-                        nodes.add({ id: nodeId, label: label, x: x, y: y });
-                        showResult(`Adicionando Nó "${label}" em tempo real...`);
-                    }
-                }
-            });
-        }
+                            if (isDirected || !isDirected) {
+                                // Configura a aresta com base nas escolhas do usuário
+                                data.label = labelAresta;
+                                if (isDirected) {
+                                    data.arrows = { to: { enabled: true } };
+                                }
+                                callback(data);
 
-        function stopAdicionarNos() {
-            network.off("click");
-        }
-
-        function startExcluirNos() {
-            stopFunctions();
-            network.on("click", function (params) {
-                if (activeButtonId === "excluirNosButton") {
-                    const nodeId = params.nodes[0];
-                    if (nodeId !== undefined) {
-                        const label = nodes.get(nodeId).label;
-                        nodes.remove({ id: nodeId });
-                        edges.remove({ from: nodeId });
-                        edges.remove({ to: nodeId });
-                        showResult(`Excluindo Nó "${label}" em tempo real...`);
-                    }
-                }
-            });
-        }
-
-
-        function stopExcluirNos() {
-            network.off("click");
-        }
-
-        function startAdicionarArestas() {
-            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
-            let fromNodeId = null;
-
-            network.once("click", function (params) {
-                if (activeButtonId === "adicionarArestasButton") {
-                    fromNodeId = params.nodes[0];
-
-                    if (fromNodeId !== undefined) {
-                        arestaTemporaria = { from: fromNodeId };
-                        showResult(`Clique em outro nó para adicionar uma aresta a partir de "${nodes.get(fromNodeId).label}"`);
-                        network.once("click", function (params) {
-                            const toNodeId = params.nodes[0];
-
-                            if (toNodeId !== undefined) {
-                                // Adiciona um elemento HTML para a janela modal
-                                const modal = document.createElement("div");
-                                modal.innerHTML = `
-                                    <p>Escolha o tipo de grafo:</p>
-                                    <button id="direcionadaButton">Direcionada</button>
-                                    <button id="naoDirecionadaButton">Não-Direcionada</button>
-                                    <input type="number" id="pesoAresta" placeholder="Peso da Aresta">
-                                    <button id="confirmaButton">Confirma</button>
-                                `;
-                                modal.style.position = "fixed";
-                                modal.style.top = "50%";
-                                modal.style.left = "50%";
-                                modal.style.transform = "translate(-50%, -50%)";
-                                modal.style.backgroundColor = "white";
-                                modal.style.padding = "20px";
-                                modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
-                                document.body.appendChild(modal);
-
-                                // Adiciona eventos aos botões da janela modal
-                                const direcionadaButton = document.getElementById("direcionadaButton");
-                                const naoDirecionadaButton = document.getElementById("naoDirecionadaButton");
-                                const confirmaButton = document.getElementById("confirmaButton");
-                                const pesoArestaInput = document.getElementById("pesoAresta");
-
-                                naoDirecionadaButton.classList.add("active-button");
-
-                                direcionadaButton.addEventListener("click", function () {
-                                    direcionadaButton.classList.add("active-button");
-                                    naoDirecionadaButton.classList.remove("active-button");
-                                });
-
-                                naoDirecionadaButton.addEventListener("click", function () {
-                                    naoDirecionadaButton.classList.add("active-button");
-                                    direcionadaButton.classList.remove("active-button");
-                                });
-
-                                confirmaButton.addEventListener("click", function () {
-                                    const isDirected = direcionadaButton.classList.contains("active-button");
-                                    const pesoAresta = pesoArestaInput.value.trim();
-
-                                    if (isDirected || !isDirected) {  // Verifica se pelo menos um dos botões está selecionado
-                                        // Cria a aresta com base nas escolhas do usuário
-                                        const novaAresta = { from: fromNodeId, to: toNodeId };
-                                        if (isDirected) {
-                                            novaAresta.arrows = { to: { enabled: true } };
-                                        }
-                                        if (pesoAresta !== "") {
-                                            novaAresta.label = pesoAresta;
-                                        }
-                                        edges.add(novaAresta);
-
-                                        // Fecha a janela modal
-                                        document.body.removeChild(modal);
-                                        showResult(`Aresta adicionada entre "${nodes.get(fromNodeId).label}" e "${nodes.get(toNodeId).label}"`);
-                                        toggleButton('adicionarArestasButton', startAdicionarArestas, stopAdicionarArestas);
-                                    } else {
-                                        // Mostra uma mensagem se nenhum botão foi selecionado
-                                        alert("Selecione o tipo de aresta (Direcionada ou Não-Direcionada)");
-                                    }
-                                });
+                                // Fecha a janela modal
+                                document.body.removeChild(modal);
+                                showResult(`Aresta adicionada entre "${nodes.get(fromNodeId).label}" e "${nodes.get(toNodeId).label}"`);
                             } else {
-                                network.releaseNode();
+                                // Mostra uma mensagem se nenhum botão foi selecionado
+                                alert("Selecione o tipo de aresta (Direcionada ou Não-Direcionada)");
                             }
                         });
                     }
-                }
-            });
-        }
-
-        function stopAdicionarArestas() {
-            network.off("click");
-        }
-
-        function startExcluirArestas() {
-            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
-            showResult("Clique na aresta que deseja excluir.");
-            network.on("click", function (params) {
-                if (activeButtonId === "excluirArestasButton") {
-                    const edgeId = params.edges[0];
-                    if (edgeId !== undefined) {
-                        const fromNodeId = edges.get(edgeId).from;
-                        const toNodeId = edges.get(edgeId).to;
-                        edges.remove({ id: edgeId });
-                        showResult(`Excluindo Aresta entre "${nodes.get(fromNodeId).label}" e "${nodes.get(toNodeId).label}" em tempo real...`);
-                    }
-                }
-            });
-        }
-
-        function stopExcluirArestas() {
-            network.off("click");
-        }
-
-        function mudarCorNo() {
-            stopFunctions(); // Garante que apenas uma função esteja ativa de cada vez
-
-            const selectedNodes = network.getSelectedNodes();
-
-            if (selectedNodes.length === 0) {
-                showResult("Selecione pelo menos um nó para mudar a cor.");
-                toggleButton('mudarCoresButton', mudarCorNo, stopMudarCorNos);
-                return;
-            }
-
-            // Cria uma janela modal para escolher a cor
-            const modal = document.createElement("div");
-            modal.innerHTML = `
-                <p>Escolha a cor do nó:</p>
-                <input type="color" id="corNoPicker" value="#000000">
-                <button id="confirmaButton">Confirma</button>
-            `;
-            modal.style.position = "fixed";
-            modal.style.top = "50%";
-            modal.style.left = "50%";
-            modal.style.transform = "translate(-50%, -50%)";
-            modal.style.backgroundColor = "white";
-            modal.style.padding = "20px";
-            modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
-            document.body.appendChild(modal);
-
-            // Adiciona eventos aos botões da janela modal
-            const confirmaButton = document.getElementById("confirmaButton");
-
-            confirmaButton.addEventListener("click", function () {
-                const corEscolhida = document.getElementById("corNoPicker").value;
-
-                selectedNodes.forEach((nodeId) => {
-                    nodes.update({ id: nodeId, color: { background: corEscolhida } });
-                });
-
-                showResult(`Cor do nó alterada para ${corEscolhida}`);
-
-                // Remove a seleção dos nós
-                network.unselectAll();
-
-                // Fecha a janela modal
-                document.body.removeChild(modal);
-            });
-        }
-
-        function stopMudarCorNos() {
-            network.off("click");
-        }
-
-        function criarGrafo() {
-            const inputText = document.getElementById("grafo-input").value.trim();
-            const lines = inputText.split('\n');
-            const grafoInfo = { nodes: [], edges: [] };
-
-            lines.forEach(line => {
-                const verticesAndWeight = line.split(':');
-                const vertices = verticesAndWeight[0].split('-');
-                const node1 = vertices[0].trim();
-                const node2 = vertices[1].trim();
-                const weight = verticesAndWeight[1] ? parseFloat(verticesAndWeight[1].trim()) : undefined;
-
-                if (!grafoInfo.nodes.includes(node1)) {
-                    grafoInfo.nodes.push(node1);
-                }
-
-                if (!grafoInfo.nodes.includes(node2)) {
-                    grafoInfo.nodes.push(node2);
-                }
-
-                grafoInfo.edges.push({ from: node1, to: node2, weight: weight });
-            });
-
-            // Cria uma janela modal para escolher entre direcionado e não-direcionado
-            const modal = document.createElement("div");
-            modal.innerHTML = `
-                <p>Escolha o tipo de grafo:</p>
-                <button id="direcionadoButton">Direcionado</button>
-                <button id="naoDirecionadoButton">Não-Direcionado</button>
-            `;
-            modal.style.position = "fixed";
-            modal.style.top = "50%";
-            modal.style.left = "50%";
-            modal.style.transform = "translate(-50%, -50%)";
-            modal.style.backgroundColor = "white";
-            modal.style.padding = "20px";
-            modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
-            document.body.appendChild(modal);
-
-            // Adiciona eventos aos botões da janela modal
-            const direcionadoButton = document.getElementById("direcionadoButton");
-            const naoDirecionadoButton = document.getElementById("naoDirecionadoButton");
-
-            direcionadoButton.addEventListener("click", function () {
-                criarGrafoWithOptions(grafoInfo, true);
-                document.body.removeChild(modal);
-            });
-
-            naoDirecionadoButton.addEventListener("click", function () {
-                criarGrafoWithOptions(grafoInfo, false);
-                document.body.removeChild(modal);
-            });
-        }
-
-        function criarGrafoWithOptions(grafoInfo, isDirected) {
-            const grafoOptions = {
-                nodes: new vis.DataSet(grafoInfo.nodes.map(node => ({ id: node, label: node }))),
-                edges: new vis.DataSet(grafoInfo.edges),
+                },
             };
 
-            if (isDirected) {
-                grafoOptions.edges.forEach(edge => {
-                    edge.arrows = { to: { enabled: true, scaleFactor: 0.5 } };
+            const getOrderButton = document.getElementById("getOrderButton");
+            const getSizeButton = document.getElementById("getSizeButton");
+
+            getOrderButton.addEventListener("click", function () {
+                const order = nodes.length;
+                showResult(`A ordem do grafo é ${order}.`);
+            });
+
+            getSizeButton.addEventListener("click", function () {
+                const size = edges.length;
+                showResult(`O tamanho do grafo é ${size}.`);
+            });
+
+            const getAdjacentVerticesButton = document.getElementById("getAdjacentVerticesButton");
+            const adjacentVerticesContainer = document.getElementById("adjacentVerticesContainer");
+
+            getAdjacentVerticesButton.addEventListener("click", function () {
+                // Obtém o ID do nó selecionado
+                const selectedNodeId = network.getSelectedNodes()[0];
+
+                // Adiciona uma janela modal para configurar a aresta
+                const modal = document.createElement("div");
+                modal.innerHTML = `
+                    <p>Escolha o tipo de grafo:</p>
+                    <button id="direcionadaButton">Direcionada</button>
+                    <button id="naoDirecionadaButton">Não-Direcionada</button>
+                    <button id="confirmaButton">Confirma</button>
+                `;
+                modal.style.position = "fixed";
+                modal.style.top = "50%";
+                modal.style.left = "50%";
+                modal.style.transform = "translate(-50%, -50%)";
+                modal.style.backgroundColor = "white";
+                modal.style.padding = "20px";
+                modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+                document.body.appendChild(modal);
+
+                // Adiciona eventos aos botões da janela modal
+                const direcionadaButton = document.getElementById("direcionadaButton");
+                const naoDirecionadaButton = document.getElementById("naoDirecionadaButton");
+                const confirmaButton = document.getElementById("confirmaButton");
+
+                naoDirecionadaButton.classList.add("active-button");
+
+                direcionadaButton.addEventListener("click", function () {
+                    direcionadaButton.classList.add("active-button");
+                    naoDirecionadaButton.classList.remove("active-button");
                 });
+
+                naoDirecionadaButton.addEventListener("click", function () {
+                    naoDirecionadaButton.classList.add("active-button");
+                    direcionadaButton.classList.remove("active-button");
+                });
+
+                confirmaButton.addEventListener("click", function () {
+                    const isDirected = direcionadaButton.classList.contains("active-button");
+                    if (isDirected || !isDirected) {
+
+                        if (selectedNodeId !== undefined) {
+                            // Obtém a lista de vértices adjacentes
+                            const adjacentNodes = network.getConnectedNodes(selectedNodeId);
+                            const adjacentEdges = network.getConnectedEdges(selectedNodeId);
+                            const inEdges = adjacentEdges.filter(edgeId => edges.get(edgeId).to === selectedNodeId);
+                            const outEdges = adjacentEdges.filter(edgeId => edges.get(edgeId).from === selectedNodeId);
+
+                            // Grau do vértice
+                            const degree = adjacentNodes.length;
+
+                            // Grau de adjacência de entrada e saída
+                            const inDegree = inEdges.length;
+                            const outDegree = outEdges.length;
+
+                            // Exibe a lista de vértices adjacentes e informações direcionadas
+                            if (adjacentNodes.length > 0) {
+                                let adjacentVerticesText = `Vértices adjacentes ao vértice "${nodes.get(selectedNodeId).label}":  ${adjacentNodes.map(nodeId => nodes.get(nodeId).label).join(", ")}.`;
+                                adjacentVerticesText += `<br>Grau do vértice : ${degree}.`;
+                                if (isDirected) {
+                                    adjacentVerticesText += `<br>Saídas: ${outEdges.map(edgeId => nodes.get(edges.get(edgeId).to).label).join(", ")}.`;
+                                    adjacentVerticesText += `<br>Entradas: ${inEdges.map(edgeId => nodes.get(edges.get(edgeId).from).label).join(", ")}.`;
+                                    adjacentVerticesText += `<br>Grau de Saída: ${outDegree}.`;
+                                    adjacentVerticesText += `<br>Grau de Entrada: ${inDegree}.`;
+                                }
+                                showResult(adjacentVerticesText);
+                            } else {
+                                showResult(`O vértice "${nodes.get(selectedNodeId).label}" não tem vértices adjacentes.`);
+                            }         
+                        } else {
+                            showResult("Selecione um vértice antes de obter os vértices adjacentes.");
+                        }
+                        // Fecha a janela modal
+                        document.body.removeChild(modal);
+                    } else {
+                        // Mostra uma mensagem se nenhum botão foi selecionado
+                        alert("Selecione o tipo de aresta (Direcionada ou Não-Direcionada)");
+                    }
+                });
+            });
+
+            const verificarAdjacenciaButton = document.getElementById("verificarAdjacenciaButton");
+            verificarAdjacenciaButton.addEventListener("click", function () {
+                // Adiciona uma janela modal para inserir as labels dos nós
+                const modal = document.createElement("div");
+                modal.innerHTML = `
+                    <p>Insira as labels dos nós:</p>
+                    <input type="text" id="labelNode1" placeholder="Label do Nó 1">
+                    <input type="text" id="labelNode2" placeholder="Label do Nó 2">
+                    <button id="confirmaAdjacenciaButton">Confirma</button>
+                `;
+                modal.style.position = "fixed";
+                modal.style.top = "50%";
+                modal.style.left = "50%";
+                modal.style.transform = "translate(-50%, -50%)";
+                modal.style.backgroundColor = "white";
+                modal.style.padding = "20px";
+                modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+                document.body.appendChild(modal);
+
+                // Adiciona eventos ao botão da janela modal
+                const confirmaAdjacenciaButton = document.getElementById("confirmaAdjacenciaButton");
+                const labelNode1Input = document.getElementById("labelNode1");
+                const labelNode2Input = document.getElementById("labelNode2");
+
+                confirmaAdjacenciaButton.addEventListener("click", function () {
+                    const labelNode1 = labelNode1Input.value.trim();
+                    const labelNode2 = labelNode2Input.value.trim();
+
+                    // Obtém os identificadores dos nós com base nas labels
+                    const node1 = nodes.getIds({ filter: node => node.label === labelNode1 })[0];
+                    const node2 = nodes.getIds({ filter: node => node.label === labelNode2 })[0];
+
+                    if (node1 !== undefined && node2 !== undefined) {
+                        // Verifica se há uma aresta entre os dois vértices
+                        const arestaExistente = edges.get({
+                            filter: function (item) {
+                                return (item.from === node1 && item.to === node2) || (item.from === node2 && item.to === node1);
+                            }
+                        }).length > 0;
+
+                        // Exibe o resultado
+                        if (arestaExistente) {
+                            showResult(`Os vértices ${labelNode1} e ${labelNode2} são adjacentes.`);
+                        } else {
+                            showResult(`Os vértices ${labelNode1} e ${labelNode2} não são adjacentes.`);
+                        }
+                    } else {
+                        alert("Labels dos nós não encontradas. Tente novamente.");
+                    }
+
+                    // Fecha a janela modal
+                    document.body.removeChild(modal);
+                });
+            });
+
+            const caminhoMaisCurtoButton = document.getElementById("caminhoMaisCurtoButton");
+
+            caminhoMaisCurtoButton.addEventListener("click", function () {
+                // Abre a janela modal para o caminho mais curto
+                const modal = document.createElement("div");
+                modal.innerHTML = `
+                    <p>Digite os vértices para o caminho mais curto:</p>
+                    <input type="text" id="verticeOrigem" placeholder="Vértice de Origem">
+                    <input type="text" id="verticeDestino" placeholder="Vértice de Destino">
+                    <button id="calculaCaminhoButton">Calcular Caminho</button>
+                `;
+                modal.style.position = "fixed";
+                modal.style.top = "50%";
+                modal.style.left = "50%";
+                modal.style.transform = "translate(-50%, -50%)";
+                modal.style.backgroundColor = "white";
+                modal.style.padding = "20px";
+                modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+                document.body.appendChild(modal);
+
+                // Adiciona eventos ao botão da janela modal
+                const calculaCaminhoButton = document.getElementById("calculaCaminhoButton");
+                const verticeOrigemInput = document.getElementById("verticeOrigem");
+                const verticeDestinoInput = document.getElementById("verticeDestino");
+
+                calculaCaminhoButton.addEventListener("click", function () {
+                    const origemLabel = verticeOrigemInput.value.trim();
+                    const destinoLabel = verticeDestinoInput.value.trim();
+
+                    if (origemLabel !== "" && destinoLabel !== "") {
+                        // Encontrar o caminho mais curto e exibir os resultados
+                        const caminho = encontrarCaminhoMaisCurto(origemLabel, destinoLabel);
+                        if (caminho) {
+                            const { custo, sequencia } = caminho;
+                            alert(`Caminho mais curto entre "${origemLabel}" e "${destinoLabel}":\nCusto: ${custo}\nSequência: ${sequencia}`);
+                        } else {
+                            alert(`Não foi possível encontrar um caminho entre "${origemLabel}" e "${destinoLabel}"`);
+                        }
+                    } else {
+                        alert("Por favor, preencha ambos os vértices.");
+                    }
+
+                    // Fecha a janela modal
+                    document.body.removeChild(modal);
+                });
+            });
+
+            function encontrarCaminhoMaisCurto(origemLabel, destinoLabel) {
+                const origemNodeId = nodes.getIds({ filter: node => node.label === origemLabel })[0];
+                const destinoNodeId = nodes.getIds({ filter: node => node.label === destinoLabel })[0];
+
+                const distancias = {};
+                const predecessores = {};
+                nodes.forEach(node => {
+                    distancias[node.id] = node.id === origemNodeId ? 0 : Infinity;
+                    predecessores[node.id] = null;
+                });
+
+                const naoVisitados = new Set(nodes.getIds());
+
+                while (naoVisitados.size > 0) {
+                    const menorDistanciaNode = Array.from(naoVisitados).reduce((menor, nodeId) => {
+                        return distancias[nodeId] < distancias[menor] ? nodeId : menor;
+                    });
+
+                    naoVisitados.delete(menorDistanciaNode);
+
+                    const vizinhos = network.getConnectedNodes(menorDistanciaNode);
+                    for (const vizinho of vizinhos) {
+                        const aresta = edges.get({ filter: edge => (edge.from === menorDistanciaNode && edge.to === vizinho) || (edge.from === vizinho && edge.to === menorDistanciaNode) })[0];
+                        const novaDistancia = distancias[menorDistanciaNode] + (aresta && aresta.label ? parseFloat(aresta.label) : 1);
+
+                        if (novaDistancia < distancias[vizinho]) {
+                            distancias[vizinho] = novaDistancia;
+                            predecessores[vizinho] = menorDistanciaNode;
+                        }
+                    }
+                }
+
+                const caminho = reconstruirCaminho(origemNodeId, destinoNodeId, predecessores);
+
+                if (caminho) {
+                    const custo = distancias[destinoNodeId];
+                    const sequencia = caminho.map(nodeId => nodes.get(nodeId).label).join(" -> ");
+                    return { custo, sequencia };
+                } else {
+                    return null;
+                }
             }
 
-            const container = document.getElementById("mynetwork");
-            const grafo = new vis.Network(container, grafoOptions, {});
-            showResult("Grafo criado com sucesso!");
-        }
+            function reconstruirCaminho(origem, destino, predecessores) {
+                const caminho = [];
+                let atual = destino;
+                while (atual !== null) {
+                    caminho.unshift(atual);
+                    atual = predecessores[atual];
+                }
+                return caminho.length > 1 ? caminho : null;
+            }
 
-        function showResult(message) {
-            document.getElementById("result-container").innerHTML = message;
-        }
+            const calcularExcentricidadeButton = document.getElementById("calcularExcentricidade");
+            calcularExcentricidadeButton.addEventListener("click", function () {
+                showResult("Clique no vértice para calcular a excentricidade.");
+                network.once("click", function (params) {
+                    const nodeId = params.nodes[0];
+                    if (nodeId !== undefined) {
+                        const excentricidade = calcularExcentricidade(nodeId);
+                        showResult(`Excentricidade do vértice ${nodes.get(nodeId).label}: ${excentricidade}`);
+                    } else {
+                        showResult("Nenhum vértice selecionado.");
+                    }
+                });
+            });
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const container = document.getElementById("mynetwork");
-            const data = { nodes: nodes, edges: edges };
-            const options = {};
+            function calcularExcentricidade(nodeId) {
+                // Função para calcular a excentricidade de um vértice usando BFS
+                const visited = new Set();
+                const queue = [{ node: nodeId, distance: 0 }];
+                let maxDistance = 0;
+
+                while (queue.length > 0) {
+                    const current = queue.shift();
+                    const currentNode = current.node;
+                    const currentDistance = current.distance;
+
+                    if (!visited.has(currentNode)) {
+                        visited.add(currentNode);
+                        maxDistance = Math.max(maxDistance, currentDistance);
+
+                        const neighbors = network.getConnectedNodes(currentNode);
+                        neighbors.forEach(function (neighbor) {
+                            queue.push({ node: neighbor, distance: currentDistance + 1 });
+                        });
+                    }
+                }
+
+                return maxDistance === 0 ? "Infinito" : maxDistance;
+            }
+
+            function showResult(message) {
+                document.getElementById("result-container").innerHTML = message;
+            }
+
             network = new vis.Network(container, data, options);
-            addEventListeners();
         });
     </script>
-    <among>
-        <svg height="36px" width="36px" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-            <rect fill="#fdd835" y="0" x="0" height="36" width="36"></rect>
-            <path d="M38.67,42H11.52C11.27,40.62,11,38.57,11,36c0-5,0-11,0-11s1.44-7.39,3.22-9.59 c1.67-2.06,2.76-3.48,6.78-4.41c3-0.7,7.13-0.23,9,1c2.15,1.42,3.37,6.67,3.81,11.29c1.49-0.3,5.21,0.2,5.5,1.28 C40.89,30.29,39.48,38.31,38.67,42z" fill="#e53935"></path>
-            <path d="M39.02,42H11.99c-0.22-2.67-0.48-7.05-0.49-12.72c0.83,4.18,1.63,9.59,6.98,9.79 c3.48,0.12,8.27,0.55,9.83-2.45c1.57-3,3.72-8.95,3.51-15.62c-0.19-5.84-1.75-8.2-2.13-8.7c0.59,0.66,3.74,4.49,4.01,11.7 c0.03,0.83,0.06,1.72,0.08,2.66c4.21-0.15,5.93,1.5,6.07,2.35C40.68,33.85,39.8,38.9,39.02,42z" fill="#b71c1c"></path>
-            <path d="M35,27.17c0,3.67-0.28,11.2-0.42,14.83h-2C32.72,38.42,33,30.83,33,27.17 c0-5.54-1.46-12.65-3.55-14.02c-1.65-1.08-5.49-1.48-8.23-0.85c-3.62,0.83-4.57,1.99-6.14,3.92L15,16.32 c-1.31,1.6-2.59,6.92-3,8.96v10.8c0,2.58,0.28,4.61,0.54,5.92H10.5c-0.25-1.41-0.5-3.42-0.5-5.92l0.02-11.09 c0.15-0.77,1.55-7.63,3.43-9.94l0.08-0.09c1.65-2.03,2.96-3.63,7.25-4.61c3.28-0.76,7.67-0.25,9.77,1.13 C33.79,13.6,35,22.23,35,27.17z" fill="#212121"></path>
-            <path d="M17.165,17.283c5.217-0.055,9.391,0.283,9,6.011c-0.391,5.728-8.478,5.533-9.391,5.337 c-0.913-0.196-7.826-0.043-7.696-5.337C9.209,18,13.645,17.32,17.165,17.283z" fill="#01579b"></path>
-            <path d="M40.739,37.38c-0.28,1.99-0.69,3.53-1.22,4.62h-2.43c0.25-0.19,1.13-1.11,1.67-4.9 c0.57-4-0.23-11.79-0.93-12.78c-0.4-0.4-2.63-0.8-4.37-0.89l0.1-1.99c1.04,0.05,4.53,0.31,5.71,1.49 C40.689,24.36,41.289,33.53,40.739,37.38z" fill="#212121"></path>
-            <path d="M10.154,20.201c0.261,2.059-0.196,3.351,2.543,3.546s8.076,1.022,9.402-0.554 c1.326-1.576,1.75-4.365-0.891-5.267C19.336,17.287,12.959,16.251,10.154,20.201z" fill="#81d4fa"></path>
-            <path d="M17.615,29.677c-0.502,0-0.873-0.03-1.052-0.069c-0.086-0.019-0.236-0.035-0.434-0.06 c-5.344-0.679-8.053-2.784-8.052-6.255c0.001-2.698,1.17-7.238,8.986-7.32l0.181-0.002c3.444-0.038,6.414-0.068,8.272,1.818 c1.173,1.191,1.712,3,1.647,5.53c-0.044,1.688-0.785,3.147-2.144,4.217C22.785,29.296,19.388,29.677,17.615,29.677z M17.086,17.973 c-7.006,0.074-7.008,4.023-7.008,5.321c-0.001,3.109,3.598,3.926,6.305,4.27c0.273,0.035,0.48,0.063,0.601,0.089 c0.563,0.101,4.68,0.035,6.855-1.732c0.865-0.702,1.299-1.57,1.326-2.653c0.051-1.958-0.301-3.291-1.073-4.075 c-1.262-1.281-3.834-1.255-6.825-1.222L17.086,17.973z" fill="#212121"></path>
-            <path d="M15.078,19.043c1.957-0.326,5.122-0.529,4.435,1.304c-0.489,1.304-7.185,2.185-7.185,0.652 C12.328,19.467,15.078,19.043,15.078,19.043z" fill="#e1f5fe"></path>
-        </svg>
-        <span class="now">Aqui ♥</span>
-        <span class="play">Doe</span>
-    </among>
-    <ill>
-        <a href="https://github.com/MoonHawlk/Grafenomenos">
-            <img src="C:\Users\rlanc\Documents\GraphApp\static\github_icon.png" alt="Grafenomenos" width="32" height="32">
-        </a>
-    </ill>
-    <xxxx class="desfecho">
-        <h3 class="desfecho-texto">© 2023 Grafenomenos. All rights reserved</h3>
-    </xxxx>
 </html>
