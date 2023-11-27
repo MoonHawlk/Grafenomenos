@@ -78,11 +78,23 @@ li {
     margin: 0 5px -5px 5px;
 }
 
+.quadro {
+    width: 350px;
+    height: 200px;
+    display: inline-block;
+    box-sizing: border-box;
+    border: 1px solid #505050;
+    padding: 10px;
+}
+
+
 #mynetwork {
-    width: 800px;
-    height: 300px;
-    border: 2px solid rgb(56, 56, 56);
-    margin: 20px auto; /* Adicionado para centralizar o grafo */
+    width: 70%;
+    height: 550px;
+    display: inline-block;
+    box-sizing: border-box;
+    border: 2px solid rgb(50, 50, 50);
+    /*margin: 20px auto; /* Adicionado para centralizar o grafo */
 }
 
 /* Estilo para destacar o botão ativo */

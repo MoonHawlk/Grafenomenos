@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grafenomenos</title>
-    <link rel="stylesheet" type="text/css" href="C:\Users\rlanc\Documents\GraphApp\static\style.css">
+    <link rel="stylesheet" type="text/css" href="../static/style.css">
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
@@ -14,25 +14,31 @@
             <img src="C:\Users\rlanc\Documents\GraphApp\static\Grafenomenos.png" alt="Grafenomenos" width="200" height="50">
         </h1>
     </nav>
-
     <div>
-        <button id="getOrderButton">Obter Ordem do Grafo</button>
-        <button id="getSizeButton">Obter Tamanho do Grafo</button>
-        <button id="verificarAdjacenciaButton">Verificar Adjacência</button>
-        <button id="caminhoMaisCurtoButton">Caminho Mais Curto</button>
-        <button id="calcularExcentricidade">Calcular Excentricidade</button>
+        <ul>
+            <li>
+                <button id="getOrderButton">Ordem do Grafo</button>
+                <button id="getSizeButton">Tamanho do Grafo</button>
+                <button id="verificarAdjacenciaButton">Verificar Adjacência</button>
+                <button id="caminhoMaisCurtoButton">Caminho Mais Curto</button>
+                <button id="calcularExcentricidade">Calcular Excentricidade</button>
+                <button id="getAdjacentVerticesButton">Adjacência e grau do vértice</button>
+                <div id="adjacentVerticesContainer"></div>
+                <button id="openModalButton">Gerar Grafo a partir de Texto</button>
+            </li>
+        </ul>
     </div>
 
-    <div>
-        <button id="getAdjacentVerticesButton">Obter Vértices Adjacentes</button>
-        <div id="adjacentVerticesContainer"></div>
+    <div> 
+        <ul>
+                <div class="quadro" id="quadro1">
+                    <p id="result-container">
+                        <!-- O conteúdo resultante será exibido aqui -->
+                    </p>
+                </div>
+                <div class="quadro" id="mynetwork"></div>
+        </ul>
     </div>
-
-    <div id="result-container">
-        <!-- O conteúdo resultante será exibido aqui -->
-    </div>
-
-    <div id="mynetwork"></div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -194,20 +200,21 @@
 
                             // Exibe a lista de vértices adjacentes e informações direcionadas
                             if (adjacentNodes.length > 0) {
-                                let adjacentVerticesText = `Vértices adjacentes ao vértice "${nodes.get(selectedNodeId).label}":  ${adjacentNodes.map(nodeId => nodes.get(nodeId).label).join(", ")}.`;
-                                adjacentVerticesText += `<br>Grau do vértice : ${degree}.`;
+                                let adjacentVerticesText = `Vértice selecionado: "${nodes.get(selectedNodeId).label}"`;
+                                adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Vértices adjacentes: ${adjacentNodes.map(nodeId => nodes.get(nodeId).label).join(", ")}`;
+                                adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Grau do vértice: ${degree}`;
                                 if (isDirected) {
-                                    adjacentVerticesText += `<br>Saídas: ${outEdges.map(edgeId => nodes.get(edges.get(edgeId).to).label).join(", ")}.`;
-                                    adjacentVerticesText += `<br>Entradas: ${inEdges.map(edgeId => nodes.get(edges.get(edgeId).from).label).join(", ")}.`;
-                                    adjacentVerticesText += `<br>Grau de Saída: ${outDegree}.`;
-                                    adjacentVerticesText += `<br>Grau de Entrada: ${inDegree}.`;
+                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Entradas: ${inEdges.map(edgeId => nodes.get(edges.get(edgeId).from).label).join(", ")}`;
+                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Grau de Entrada: ${inDegree}`;
+                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Saídas: ${outEdges.map(edgeId => nodes.get(edges.get(edgeId).to).label).join(", ")}`;    
+                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Grau de Saída: ${outDegree}`;
                                 }
                                 showResult(adjacentVerticesText);
                             } else {
-                                showResult(`O vértice "${nodes.get(selectedNodeId).label}" não tem vértices adjacentes.`);
+                                alert(`O vértice "${nodes.get(selectedNodeId).label}" não tem vértices adjacentes.`);
                             }         
                         } else {
-                            showResult("Selecione um vértice antes de obter os vértices adjacentes.");
+                            alert("Selecione um vértice antes de obter os vértices adjacentes.");
                         }
                         // Fecha a janela modal
                         document.body.removeChild(modal);
@@ -307,7 +314,7 @@
                         const caminho = encontrarCaminhoMaisCurto(origemLabel, destinoLabel);
                         if (caminho) {
                             const { custo, sequencia } = caminho;
-                            alert(`Caminho mais curto entre "${origemLabel}" e "${destinoLabel}":\nCusto: ${custo}\nSequência: ${sequencia}`);
+                            showResult(`Caminho mais curto entre "${origemLabel}" e "${destinoLabel}":<br>Custo: ${custo}<br>Sequência: ${sequencia}`);
                         } else {
                             alert(`Não foi possível encontrar um caminho entre "${origemLabel}" e "${destinoLabel}"`);
                         }
@@ -374,43 +381,156 @@
             }
 
             const calcularExcentricidadeButton = document.getElementById("calcularExcentricidade");
+
             calcularExcentricidadeButton.addEventListener("click", function () {
-                showResult("Clique no vértice para calcular a excentricidade.");
-                network.once("click", function (params) {
-                    const nodeId = params.nodes[0];
-                    if (nodeId !== undefined) {
-                        const excentricidade = calcularExcentricidade(nodeId);
-                        showResult(`Excentricidade do vértice ${nodes.get(nodeId).label}: ${excentricidade}`);
+                // Abre a janela modal para a excentricidade
+                const modal = document.createElement("div");
+                modal.innerHTML = `
+                    <p>Digite o vértice para calcular a excentricidade:</p>
+                    <input type="text" id="verticeSelecionado" placeholder="Vértice Selecionado">
+                    <button id="calculaExcentricidadeButton">Calcular Excentricidade</button>
+                `;
+                modal.style.position = "fixed";
+                modal.style.top = "50%";
+                modal.style.left = "50%";
+                modal.style.transform = "translate(-50%, -50%)";
+                modal.style.backgroundColor = "white";
+                modal.style.padding = "20px";
+                modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+                document.body.appendChild(modal);
+
+                // Adiciona eventos ao botão da janela modal
+                const calculaExcentricidadeButton = document.getElementById("calculaExcentricidadeButton");
+                const verticeSelecionadoInput = document.getElementById("verticeSelecionado");
+
+                calculaExcentricidadeButton.addEventListener("click", function () {
+                    const verticeSelecionadoLabel = verticeSelecionadoInput.value.trim();
+
+                    if (verticeSelecionadoLabel !== "") {
+                        // Encontrar a excentricidade e exibir os resultados
+                        const excentricidade = calcularExcentricidade(verticeSelecionadoLabel);
+                        showResult(`Excentricidade do vértice "${verticeSelecionadoLabel}": ${excentricidade}`);
                     } else {
-                        showResult("Nenhum vértice selecionado.");
+                        alert("Por favor, preencha o vértice.");
                     }
+
+                    // Fecha a janela modal
+                    document.body.removeChild(modal);
                 });
             });
 
-            function calcularExcentricidade(nodeId) {
-                // Função para calcular a excentricidade de um vértice usando BFS
-                const visited = new Set();
-                const queue = [{ node: nodeId, distance: 0 }];
-                let maxDistance = 0;
+            function calcularExcentricidade(verticeLabel) {
+                const verticeNodeId = nodes.getIds({ filter: node => node.label === verticeLabel })[0];
 
-                while (queue.length > 0) {
-                    const current = queue.shift();
-                    const currentNode = current.node;
-                    const currentDistance = current.distance;
+                const distancias = {};
+                nodes.forEach(node => {
+                    distancias[node.id] = node.id === verticeNodeId ? 0 : Infinity;
+                });
 
-                    if (!visited.has(currentNode)) {
-                        visited.add(currentNode);
-                        maxDistance = Math.max(maxDistance, currentDistance);
+                const naoVisitados = new Set(nodes.getIds());
 
-                        const neighbors = network.getConnectedNodes(currentNode);
-                        neighbors.forEach(function (neighbor) {
-                            queue.push({ node: neighbor, distance: currentDistance + 1 });
-                        });
+                while (naoVisitados.size > 0) {
+                    const menorDistanciaNode = Array.from(naoVisitados).reduce((menor, nodeId) => {
+                        return distancias[nodeId] < distancias[menor] ? nodeId : menor;
+                    });
+
+                    naoVisitados.delete(menorDistanciaNode);
+
+                    const vizinhos = network.getConnectedNodes(menorDistanciaNode);
+                    for (const vizinho of vizinhos) {
+                        const aresta = edges.get({
+                            filter: edge =>
+                                (edge.from === menorDistanciaNode && edge.to === vizinho) ||
+                                (edge.from === vizinho && edge.to === menorDistanciaNode),
+                        })[0];
+                        const novaDistancia = distancias[menorDistanciaNode] + (aresta && aresta.label ? parseFloat(aresta.label) : 1);
+
+                        if (novaDistancia < distancias[vizinho]) {
+                            distancias[vizinho] = novaDistancia;
+                        }
                     }
                 }
 
-                return maxDistance === 0 ? "Infinito" : maxDistance;
+                // Encontra a maior distância, que representa a excentricidade
+                let excentricidade = 0;
+                nodes.forEach(function (node) {
+                    excentricidade = Math.max(excentricidade, distancias[node.id]);
+                });
+
+                return excentricidade === Infinity ? "Infinito" : excentricidade;
             }
+
+            openModalButton.addEventListener("click", function () {
+                // Adiciona uma janela modal para inserir as arestas
+                const modal = document.createElement("div");
+                modal.innerHTML = `
+                    <p>Escolha o tipo de grafo:</p>
+                    <button id="direcionadoButton">Direcionado</button>
+                    <button id="naoDirecionadoButton" class="active-button">Não Direcionado</button>
+                    <textarea id="inputArestas" placeholder="Digite as arestas"></textarea>
+                    <button id="gerarGrafoButton">Gerar Grafo</button>
+                `;
+                modal.style.position = "fixed";
+                modal.style.top = "50%";
+                modal.style.left = "50%";
+                modal.style.transform = "translate(-50%, -50%)";
+                modal.style.backgroundColor = "white";
+                modal.style.padding = "20px";
+                modal.style.boxShadow = "0px 0px 10px rgba(0, 0, 0, 0.5)";
+                document.body.appendChild(modal);
+
+                const direcionadoButton = document.getElementById("direcionadoButton");
+                const naoDirecionadoButton = document.getElementById("naoDirecionadoButton");
+                const gerarGrafoButton = document.getElementById("gerarGrafoButton");
+
+                direcionadoButton.addEventListener("click", function () {
+                    direcionadoButton.classList.add("active-button");
+                    naoDirecionadoButton.classList.remove("active-button");
+                });
+
+                naoDirecionadoButton.addEventListener("click", function () {
+                    naoDirecionadoButton.classList.add("active-button");
+                    direcionadoButton.classList.remove("active-button");
+                });
+
+                gerarGrafoButton.addEventListener("click", function () {
+                    const arestasText = document.getElementById("inputArestas").value.trim().split("\n");
+                    const isDirecionado = direcionadoButton.classList.contains("active-button");
+
+                    // Limpa os conjuntos de nós e arestas
+                    nodes.clear();
+                    edges.clear();
+
+                    // Adiciona os nós ao conjunto para garantir que não há nós duplicados
+                    const uniqueNodes = new Set();
+
+                    // Adiciona as arestas com base no texto inserido e tipo de grafo
+                    arestasText.forEach(arestaText => {
+                        const [vertices, peso] = arestaText.split(":");
+                        const [vertice1, vertice2] = vertices.split("-");
+
+                        // Adiciona os nós ao conjunto
+                        uniqueNodes.add(vertice1);
+                        uniqueNodes.add(vertice2);
+
+                        // Adiciona as arestas
+                        edges.add({ from: vertice1, to: vertice2, label: peso, arrows: isDirecionado ? { to: { enabled: true } } : undefined });
+                    });
+
+                    // Adiciona os nós ao grafo
+                    uniqueNodes.forEach(node => {
+                        nodes.add({ id: node, label: node });
+                    });
+
+                    // Fecha a janela modal
+                    document.body.removeChild(modal);
+
+                    // Atualiza o grafo na tela
+                    network.setData({ nodes: nodes, edges: edges });
+                });
+
+            });
+
 
             function showResult(message) {
                 document.getElementById("result-container").innerHTML = message;
