@@ -1,10 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Heebo&display=swap');
 
-body{
-    background-color: rgb(255, 255, 255);
-    font-family:'Heebo';
+html{ 
+    width: 100%;
+    height: 100%;
 }
+
+body{
+    background-color: rgb(0, 0, 0);
+    font-family:'Heebo';
+    font-size: 14px;
+}
+
+
 nav{
+    position: absolute;
+    top: 80px;
+    left: 15px;
     display: flex;
     justify-content: center;
 }
@@ -16,84 +27,31 @@ ul {
     justify-content: center;
     
 }
-among {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 0 10px;
-    color: white;
-    text-shadow: 2px 2px rgb(116, 116, 116);
-    text-transform: uppercase;
-    border: solid 2px black;
-    letter-spacing: 1px;
-    font-weight: 600;
-    font-size: 17px;
-    background-color: hsl(49deg 98% 60%);
-    margin-left: 42%;
-    margin-right: 42%;
-    border-radius: 50px;
-    position: relative;
-    overflow: hidden;
-    transition: all .5s ease;
-}
-  
-among:active {
-    transform: scale(.9);
-    transition: all 100ms ease;
-}
-  
-among svg {
-    transition: all .5s ease;
-    z-index: 2;
-}
-  
-  .play {
-    transition: all .5s ease;
-    transition-delay: 300ms;
-  }
-  
-  among:hover svg {
-    transform: scale(3) translate(50%);
-}
-  
-.now {
-    position: absolute;
-    left: 0;
-    transform: translateX(-100%);
-    transition: all .5s ease;
-    z-index: 2;
-}
-  
-among:hover .now {
-    transform: translateX(90%);
-    transition-delay: 300ms;
-}
-  
-among:hover .play {
-    transform: translateX(0%);
-    transition-delay: 300ms;
-}
-li {
-    margin: 0 5px -5px 5px;
-}
-
+ 
 .quadro {
-    width: 350px;
-    height: 200px;
-    display: inline-block;
+    position: absolute;
+    top: 250px;
+    left: 5px;
+    width: 365px;
+    height: 300px;
+    margin-top: 1;
+    display: flex;
     box-sizing: border-box;
-    border: 1px solid #505050;
-    padding: 10px;
+    background-color: rgb(99, 99, 99);
+    border: 5px rgb(0, 0, 0);
+    padding: 1%;
 }
-
 
 #mynetwork {
-    width: 70%;
-    height: 550px;
-    display: inline-block;
+    position: absolute;
+    top: 50px;
+    right: 5px;
+    width: 900px;
+    height: 500px;
+    display: relative;
     box-sizing: border-box;
-    border: 2px solid rgb(50, 50, 50);
+    background-color: rgb(255, 255, 255);
+    border: 5px solid rgb(200, 200, 200);
     /*margin: 20px auto; /* Adicionado para centralizar o grafo */
 }
 
@@ -103,18 +61,30 @@ li {
     color: white;
 }
 
-.desfecho-texto{    
-    margin-top: 1%;
-    margin-left: 40%;
-    margin-right: 40%;
+.desfecho-texto{  
+    position:absolute;
+    bottom: 0;  
+    left: 35%;
     justify-content: center;
     display: flex;
     font-size: 15px;
     text-align: center;
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
+    font-size: 22px;
 }
 ill{
-    margin-top: 1%;
+    position: absolute;
+    bottom: 80px;
+    left: 625px;
+    margin-top: 5px;
     justify-content: center;
     display: flex;
 }
+
+div.relative {
+    position: relative;
+    margin-left: 10%;
+    width: 1280px;
+    height: 680px;
+    border: 3px solid #73AD21;
+} 

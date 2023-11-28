@@ -9,36 +9,51 @@
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
-    <nav>      
-        <h1>
-            <img src="C:\Users\rlanc\Documents\GraphApp\static\Grafenomenos.png" alt="Grafenomenos" width="200" height="50">
-        </h1>
-    </nav>
-    <div>
-        <ul>
-            <li>
-                <button id="getOrderButton">Ordem do Grafo</button>
-                <button id="getSizeButton">Tamanho do Grafo</button>
-                <button id="verificarAdjacenciaButton">Verificar Adjacência</button>
-                <button id="caminhoMaisCurtoButton">Caminho Mais Curto</button>
-                <button id="calcularExcentricidade">Calcular Excentricidade</button>
-                <button id="getAdjacentVerticesButton">Adjacência e grau do vértice</button>
-                <div id="adjacentVerticesContainer"></div>
-                <button id="openModalButton">Gerar Grafo a partir de Texto</button>
-            </li>
-        </ul>
+
+
+
+    <div class="relative">
+        <div>
+            <ul>
+                <li>
+                    <button style="font-size: 18px;" id="getOrderButton">Ordem</button>
+                    <button style="font-size: 18px;" id="getSizeButton">Tamanho</button>
+                    <button style="font-size: 18px;" id="verificarAdjacenciaButton">Adjacência 2V</button>
+                    <button style="font-size: 18px;" id="caminhoMaisCurtoButton">Menor Caminho</button>
+                    <button style="font-size: 18px;" id="calcularExcentricidade">Excentricidade</button>
+                    <button style="font-size: 18px;" id="getAdjacentVerticesButton">Adjacência e grau do vértice</button>
+                    <button style="font-size: 18px;" id="openModalButton">Gerar Grafo de Texto</button>
+                    <button style="font-size: 18px;" id="calcularDiametroButton">Calcular Diâmetro</button>
+                    <input type="file" id="fileInput" accept=".csv">
+                    <div id="adjacentVerticesContainer"></div>
+                </li>
+            </ul>
+        </div>
+        <nav>      
+            <div>
+                <img src="..\static\Grafenomenos.png" alt="Grafenomenos" width="350" height="100">
+            </div>
+        </nav>
+    
+        <div class="quadro" id="quadro1">
+            
+                <p style="font-size: 22px;color: rgb(19, 252, 70);" id="result-container"></p>
+            
+        </div>
+    
+        <div id="mynetwork"></div>
+
+        <ill>
+            <a href="https://github.com/MoonHawlk/Grafenomenos">
+                <img src="..\static\github_icon.png" alt="Grafenomenos" width="32" height="32">
+            </a>
+        </ill>
+        <xxxx class="desfecho">
+            <h3 class="desfecho-texto">© 2023 Grafenomenos. All rights reserved</h3>
+        </xxxx>
     </div>
 
-    <div> 
-        <ul>
-                <div class="quadro" id="quadro1">
-                    <p id="result-container">
-                        <!-- O conteúdo resultante será exibido aqui -->
-                    </p>
-                </div>
-                <div class="quadro" id="mynetwork"></div>
-        </ul>
-    </div>
+
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -201,13 +216,13 @@
                             // Exibe a lista de vértices adjacentes e informações direcionadas
                             if (adjacentNodes.length > 0) {
                                 let adjacentVerticesText = `Vértice selecionado: "${nodes.get(selectedNodeId).label}"`;
-                                adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Vértices adjacentes: ${adjacentNodes.map(nodeId => nodes.get(nodeId).label).join(", ")}`;
-                                adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Grau do vértice: ${degree}`;
+                                adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp - Vértices adjacentes: ${adjacentNodes.map(nodeId => nodes.get(nodeId).label).join(", ")}`;
+                                adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp - Grau do vértice: ${degree}`;
                                 if (isDirected) {
-                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Entradas: ${inEdges.map(edgeId => nodes.get(edges.get(edgeId).from).label).join(", ")}`;
-                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Grau de Entrada: ${inDegree}`;
-                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Saídas: ${outEdges.map(edgeId => nodes.get(edges.get(edgeId).to).label).join(", ")}`;    
-                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp Grau de Saída: ${outDegree}`;
+                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp - Entradas: ${inEdges.map(edgeId => nodes.get(edges.get(edgeId).from).label).join(", ")}`;
+                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp - Grau de Entrada: ${inDegree}`;
+                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp - Saídas: ${outEdges.map(edgeId => nodes.get(edges.get(edgeId).to).label).join(", ")}`;    
+                                    adjacentVerticesText += `<br>&nbsp&nbsp&nbsp&nbsp - Grau de Saída: ${outDegree}`;
                                 }
                                 showResult(adjacentVerticesText);
                             } else {
@@ -531,6 +546,79 @@
 
             });
 
+            const calcularDiametroButton = document.getElementById("calcularDiametroButton");
+
+            calcularDiametroButton.addEventListener("click", function () {
+                const diametro = calcularDiametro();
+                showResult(`O diâmetro do grafo é ${diametro}`);
+            });
+
+            function calcularDiametro() {
+                let diametro = 0;
+
+                // Itera sobre todos os pares de vértices e calcula a distância entre eles
+                nodes.forEach(function (node1) {
+                    nodes.forEach(function (node2) {
+                        if (node1.id !== node2.id) {
+                            const distancia = encontrarCaminhoMaisCurto(node1.label, node2.label)?.custo || Infinity;
+                            diametro = Math.max(diametro, distancia);
+                        }
+                    });
+                });
+
+                return diametro === Infinity ? "Infinito" : diametro;
+            }
+
+            const fileInput = document.getElementById("fileInput");
+
+            fileInput.addEventListener("change", function (event) {
+                const file = event.target.files[0];
+
+                if (file) {
+                    const reader = new FileReader();
+
+                    reader.onload = function (e) {
+                        const csvContent = e.target.result;
+                        processarCSV(csvContent);
+                    };
+
+                    reader.onerror = function (error) {
+                        console.error("Erro durante a leitura do arquivo:", error);
+                    };
+
+                    reader.readAsText(file);
+                }
+            });
+
+            function processarCSV(csvContent) {
+                const linhas = csvContent.split("\n");
+
+                // Ignora a primeira linha (cabeçalhos)
+                for (let i = 1; i < linhas.length; i++) {
+                    const linha = linhas[i].trim();
+
+                    // Verifica se a linha não está vazia e contém pelo menos três valores
+                    if (linha.length > 0 && linha.split(",").length >= 3) {
+                        const valores = linha.split(",");
+                        const vertice1 = valores[0].trim();
+                        const vertice2 = valores[1].trim();
+                        const peso = parseFloat(valores[2].trim());
+
+                        console.log(`Linha ${i}: Vertice1=${vertice1}, Vertice2=${vertice2}, Peso=${peso}`);
+
+                        // Adiciona ou atualiza os vértices
+                        nodes.update({ id: vertice1, label: vertice1 });
+                        nodes.update({ id: vertice2, label: vertice2 });
+
+                        edges.add({ from: vertice1, to: vertice2, label: peso.toString() });
+                    }
+                }
+
+                // Exibe a quantidade de nós e arestas após o processamento
+                console.log(`Total de nós: ${nodes.length}, Total de arestas: ${edges.length}`);
+
+                network.setData({ nodes: nodes, edges: edges });
+            }
 
             function showResult(message) {
                 document.getElementById("result-container").innerHTML = message;
